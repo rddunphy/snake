@@ -25,6 +25,8 @@ var storedKeypress;
 var score = highscore = 0;
 // Direction changed in this frame, and whether game is paused
 var dirChanged = paused = false;
+var timer;
+var wrap;
 
 window.onload = function() {
     canvas = document.getElementById("snake_canvas");
@@ -32,10 +34,12 @@ window.onload = function() {
     // Grid count - should be 21 for canvas size 420.
     gc = Math.floor(Math.max(canvas.width, canvas.height) / gs);
     document.addEventListener("keydown", handleKeypress);
-    start();
+    document.getElementById("settings_btn").onclick = loadSettingsAndStart;
+    loadSettingsAndStart();
 }
 
 function start() {
+        clearTimeout(timer);
     snakeLength = 4;
     if (score > highscore) {
         highscore = score;
@@ -55,6 +59,11 @@ function start() {
     incrementGame();
 }
 
+function loadSettingsAndStart() {
+    wrap = document.getElementById("wrap_cb").checked;
+    start();
+}
+
 function incrementGame() {
     if (paused) {
         // Game paused, so do nothing for now.
@@ -65,7 +74,7 @@ function incrementGame() {
     if (isDead(newX, newY)) {
         // If dead, pause graphics for a moment and then restart.
         draw();
-        window.setTimeout(start, 1500);
+        timer = window.setTimeout(start, 1500);
         return;
     }
     x = newX;
@@ -91,11 +100,10 @@ function incrementGame() {
     }
     // Redraw the board.
     draw();
-    window.setTimeout(incrementGame, 1000 / fr);
+    timer = window.setTimeout(incrementGame, 1000 / fr);
 }
 
 function isDead(newX, newY) {
-    var wrap = document.getElementById("wrap_cb").checked;
     if (!wrap) {
         if (Math.abs(newX - snake[0][0]) > 1 || Math.abs(newY - snake[0][1]) > 1) {
             // You hit the wall.
@@ -169,17 +177,34 @@ function draw() {
     drawSnake();
 }
 
+function toggleSettings() {
+    var inst = document.getElementById("instruction_div");
+    var set = document.getElementById("settings_div");
+    if (inst.style.display != "none") {
+        inst.style.display = "none";
+        set.style.display = "block";
+    } else {
+        inst.style.display = "block";
+        set.style.display = "none";
+    }
+}
+
+function togglePaused() {
+    paused = !paused;
+    var x = document.getElementById("paused_div");
+    if (paused) {
+        x.style.display = "block";
+    } else {
+        x.style.display = "none";
+        incrementGame();
+    }
+}
+
 function handleKeypress(e) {
     if (e.keyCode == 80) { // P for Pause
-        paused = !paused;
-        var x = document.getElementById("paused_div");
-        if (paused) {
-            x.style.display = "block";
-        } else {
-            x.style.display = "none";
-            incrementGame();
-        }
-        return;
+        togglePaused();
+    } else if (e.keyCode == 83) { // S for Settings
+        toggleSettings();
     } else if (!paused) {
         if (dirChanged) {
             // Only change direction once per frame.
