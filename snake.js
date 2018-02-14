@@ -6,9 +6,7 @@ var gs = 20;
 // Grid count - number of squares in the grid
 var gc;
 // Frame rate in Hz
-var fr, startFr = 10;
-// Acceleration of frame rate when fruit is eaten
-var acceleration = 1.025;
+var fr;
 // Coordinates of head of snake
 var x, y;
 // Velocity of snake
@@ -25,8 +23,10 @@ var storedKeypress;
 var score = highscore = 0;
 // Direction changed in this frame, and whether game is paused
 var dirChanged = paused = false;
+// Timer used by incrementGame()
 var timer;
-var wrap;
+// Object used to store settings
+var settings = {};
 
 window.onload = function() {
     canvas = document.getElementById("snake_canvas");
@@ -39,7 +39,7 @@ window.onload = function() {
 }
 
 function start() {
-        clearTimeout(timer);
+    clearTimeout(timer);
     snakeLength = 4;
     if (score > highscore) {
         highscore = score;
@@ -53,14 +53,27 @@ function start() {
     // Direction = up
     dir = 1;
     // Reset frame rate
-    fr = startFr;
+    fr = settings.startFr;
     generateFruit();
     storedKeypress = null;
     incrementGame();
 }
 
 function loadSettingsAndStart() {
-    wrap = document.getElementById("wrap_cb").checked;
+    // Load wrap setting
+    settings.wrap = document.getElementById("wrap_cb").checked;
+    // Load starting frame rate
+    var frInput = document.getElementById("fr_input").value;
+    if (isNaN(frInput) || !frInput || frInput < 5 || frInput > 50) {
+        frInput = document.getElementById("fr_input").value = 12;
+    }
+    settings.startFr = frInput;
+    // Load acceleration
+    var accInput = document.getElementById("acc_input").value;
+    if (isNaN(accInput) || !accInput || accInput < 0 || accInput > 100) {
+        accInput = document.getElementById("acc_input").value = 25;
+    }
+    settings.acceleration = 1 + accInput / 1000;
     start();
 }
 
@@ -88,7 +101,7 @@ function incrementGame() {
         generateFruit();
         snakeLength++;
         score++;
-        fr *= acceleration;
+        fr *= settings.acceleration;
     }
     // Chop off tail
     snake = snake.slice(0, snakeLength);
@@ -104,7 +117,7 @@ function incrementGame() {
 }
 
 function isDead(newX, newY) {
-    if (!wrap) {
+    if (!settings.wrap) {
         if (Math.abs(newX - snake[0][0]) > 1 || Math.abs(newY - snake[0][1]) > 1) {
             // You hit the wall.
             return true;
