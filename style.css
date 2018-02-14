@@ -1,0 +1,19 @@
+
+div {
+    width: 420px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#title_div {
+    font-size: x-large;
+}
+
+#paused_div {
+    color: red;
+}
+
+#copyright_div {
+    color: grey;
+    font-size: small;
+}
