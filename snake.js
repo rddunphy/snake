@@ -32,7 +32,10 @@ var defaultSettings = {
     startFr: 10,
     acceleration: 25,
     ww: 21,
-    wh: 21
+    wh: 21,
+    worldColour: "#C2DEA6",
+    snakeColour: "#276A25",
+    fruitColour: "#ff0000"
 };
 
 window.onload = function() {
@@ -111,6 +114,10 @@ function loadSettingsAndStart() {
         accInput = document.getElementById("acc_input").value = defaultSettings.acceleration;
     }
     settings.acceleration = accInput;
+    // Load colour scheme
+    settings.worldColour = document.getElementById("wc_input").value;
+    settings.snakeColour = document.getElementById("sc_input").value;
+    settings.fruitColour = document.getElementById("fc_input").value;
     if (!gameView) {
         toggleSettingsView();
     }
@@ -190,12 +197,12 @@ function generateFruit() {
 function drawFruit() {
     ctx.beginPath();
     ctx.arc((fx + 0.5) * gs, (fy + 0.5) * gs, 10, 0, 2 * Math.PI, false);
-    ctx.fillStyle = "red";
+    ctx.fillStyle = settings.fruitColour;
     ctx.fill()
 }
 
 function drawSnake() {
-    ctx.fillStyle = "green";
+    ctx.fillStyle = settings.snakeColour;
     // Head
     ctx.beginPath();
     ctx.arc((x + 0.5) * gs, (y + 0.5) * gs, 9, (dir+1) * Math.PI / 2, (dir + 3) * Math.PI / 2, false);
@@ -226,7 +233,7 @@ function draw() {
     var scoreString = "Score: " + score + " - Highscore: " + highscore;
     document.getElementById("score_div").innerHTML = scoreString;
     // Draw background
-    ctx.fillStyle = "black";
+    ctx.fillStyle = settings.worldColour;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     // The rest
     drawFruit();
@@ -247,6 +254,9 @@ function toggleSettingsView() {
         document.getElementById("acc_input").value = settings.acceleration;
         document.getElementById("ww_input").value = settings.ww;
         document.getElementById("wh_input").value = settings.wh;
+        document.getElementById("wc_input").value = settings.worldColour;
+        document.getElementById("sc_input").value = settings.snakeColour;
+        document.getElementById("fc_input").value = settings.fruitColour;
     } else {
         gv.style.display = "block";
         sv.style.display = "none";
