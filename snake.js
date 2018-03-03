@@ -320,6 +320,10 @@ function handleKeypress(e) {
             case 80: // P for Pause
                 togglePaused();
                 break;
+            default:
+                // Don't prevent default action if any other key.
+                return;
         }
+        e.preventDefault();
     }
 }
