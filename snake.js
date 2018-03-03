@@ -20,13 +20,19 @@ var snake, snakeLength;
 // Last keypress event from previous frame
 var storedKeypress;
 // Scores
-var score = highscore = 0;
+var score, highscore;
 // Direction changed in this frame, and whether game is paused
 var dirChanged = paused = false;
 // Timer used by incrementGame()
 var timer;
 // Object used to store settings
 var settings = {};
+// Defaults
+var defaultSettings = {
+    wrap: true,
+    startFr: 10,
+    acceleration: 25
+};
 
 window.onload = function() {
     canvas = document.getElementById("snake_canvas");
@@ -35,7 +41,7 @@ window.onload = function() {
     gc = Math.floor(Math.max(canvas.width, canvas.height) / gs);
     document.addEventListener("keydown", handleKeypress);
     document.getElementById("settings_btn").onclick = loadSettingsAndStart;
-    loadSettingsAndStart();
+    reset();
 }
 
 function start() {
@@ -59,6 +65,15 @@ function start() {
     incrementGame();
 }
 
+function reset() {
+    settings = Object.assign({}, defaultSettings);
+    document.getElementById("wrap_cb").checked = settings.wrap;
+    document.getElementById("fr_input").value = settings.startFr;
+    document.getElementById("acc_input").value = settings.acceleration;
+    score = highscore = 0;
+    start();
+}
+
 function loadSettingsAndStart() {
     // Load wrap setting
     settings.wrap = document.getElementById("wrap_cb").checked;
@@ -73,7 +88,7 @@ function loadSettingsAndStart() {
     if (isNaN(accInput) || !accInput || accInput < 0 || accInput > 100) {
         accInput = document.getElementById("acc_input").value = 25;
     }
-    settings.acceleration = 1 + accInput / 1000;
+    settings.acceleration = accInput;
     start();
 }
 
@@ -101,7 +116,7 @@ function incrementGame() {
         generateFruit();
         snakeLength++;
         score++;
-        fr *= settings.acceleration;
+        fr *= 1 + settings.acceleration / 1000;
     }
     // Chop off tail
     snake = snake.slice(0, snakeLength);
@@ -266,6 +281,9 @@ function handleKeypress(e) {
             break;
         case 80: // P for Pause
             togglePaused();
+            break;
+        case 82: // R for Reset
+            reset();
             break;
         case 83: // S for Settings
             toggleSettings();
