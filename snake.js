@@ -213,47 +213,62 @@ function togglePaused() {
     }
 }
 
-function handleKeypress(e) {
-    if (e.keyCode == 80) { // P for Pause
-        togglePaused();
-    } else if (e.keyCode == 83) { // S for Settings
-        toggleSettings();
-    } else if (!paused) {
+function dirChange(e, newDir) {
+    if (!paused) {
         if (dirChanged) {
             // Only change direction once per frame.
             storedKeypress = e;
         } else {
-            switch(e.keyCode) {
-                case 37: // Left
-                    if (dir != 2) {
+            var opp = (newDir + 2) % 4;
+            if (dir != opp && dir != newDir) {
+                switch (newDir) {
+                    case 0: // Left
                         vx = -1;
                         vy = 0;
-                        dir = 0;
-                    }
-                    break;
-                case 38: // Up
-                    if (dir != 3) {
-                        vy = -1;
+                        break;
+                    case 1: // Up
                         vx = 0;
-                        dir = 1;
-                    }
-                    break;
-                case 39: // Right
-                    if (dir != 0) {
+                        vy = -1;
+                        break;
+                    case 2: // Right
                         vx = 1;
                         vy = 0;
-                        dir = 2;
-                    }
-                    break;
-                case 40: // Down
-                    if (dir != 1) {
-                        vy = 1;
+                        break;
+                    case 3: // Down
                         vx = 0;
-                        dir = 3;
-                    }
-                    break;
+                        vy = 1;
+                        break;
+                }
+                dir = newDir;
+                dirChanged = true;
+            } else if (vx == 0 && vy == 0) {
+                // Game not yet started
+                vy = -1;
             }
-            dirChanged = true;
         }
+    }
+
+}
+
+function handleKeypress(e) {
+    switch (e.keyCode) {
+        case 37: // Left
+            dirChange(e, 0);
+            break;
+        case 38: // Up
+            dirChange(e, 1);
+            break;
+        case 39: // Right
+            dirChange(e, 2);
+            break;
+        case 40: // Down
+            dirChange(e, 3);
+            break;
+        case 80: // P for Pause
+            togglePaused();
+            break;
+        case 83: // S for Settings
+            toggleSettings();
+            break;
     }
 }
