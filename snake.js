@@ -43,6 +43,8 @@ window.onload = function() {
     document.addEventListener("keydown", handleKeypress);
     document.getElementById("apply_settings_btn").onclick = loadSettingsAndStart;
     document.getElementById("cancel_settings_btn").onclick = toggleSettingsView;
+    document.getElementById("reset_btn").onclick = reset;
+    document.getElementById("settings_btn").onclick = toggleSettingsView;
     reset();
 }
 
@@ -69,6 +71,12 @@ function start() {
 }
 
 function reset() {
+    if (!gameView) {
+        toggleSettingsView();
+    }
+    if (paused) {
+        togglePaused();
+    }
     settings = Object.assign({}, defaultSettings);
     score = highscore = 0;
     start();
@@ -276,7 +284,6 @@ function dirChange(e, newDir) {
             running = true;
         }
     }
-
 }
 
 function handleKeypress(e) {
@@ -296,12 +303,6 @@ function handleKeypress(e) {
                 break;
             case 80: // P for Pause
                 togglePaused();
-                break;
-            case 82: // R for Reset
-                reset();
-                break;
-            case 83: // S for Settings
-                toggleSettingsView();
                 break;
         }
     }
