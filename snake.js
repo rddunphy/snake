@@ -35,8 +35,20 @@ var defaultSettings = {
     wh: 21,
     worldColour: "#C2DEA6",
     snakeColour: "#276A25",
-    fruitColour: "#ff0000"
+    fruitColour: "#ff0000",
+    keyL: 37,
+    keyStrL: "ArrowLeft",
+    keyU: 38,
+    keyStrU: "ArrowUp",
+    keyR: 39,
+    keyStrR: "ArrowRight",
+    keyD: 40,
+    keyStrD: "ArrowDown",
+    keyP: 80,
+    keyStrP: "p"
 };
+newKeyBindings = {};
+keyToBind = "";
 
 window.onload = function() {
     canvas = document.getElementById("snake_canvas");
@@ -47,6 +59,11 @@ window.onload = function() {
     document.getElementById("cancel_settings_btn").onclick = toggleSettingsView;
     document.getElementById("reset_btn").onclick = reset;
     document.getElementById("settings_btn").onclick = toggleSettingsView;
+    document.getElementById("key_left").onclick = function() {bindKey("left");};
+    document.getElementById("key_right").onclick = function() {bindKey("right");};
+    document.getElementById("key_up").onclick = function() {bindKey("up");};
+    document.getElementById("key_down").onclick = function() {bindKey("down");};
+    document.getElementById("key_pause").onclick = function() {bindKey("pause");};
     reset();
 }
 
@@ -118,6 +135,9 @@ function loadSettingsAndStart() {
     settings.worldColour = document.getElementById("wc_input").value;
     settings.snakeColour = document.getElementById("sc_input").value;
     settings.fruitColour = document.getElementById("fc_input").value;
+    // Load key bindings
+    Object.assign(settings, newKeyBindings);
+    newKeyBindings = {};
     if (!gameView) {
         toggleSettingsView();
     }
@@ -257,6 +277,11 @@ function toggleSettingsView() {
         document.getElementById("wc_input").value = settings.worldColour;
         document.getElementById("sc_input").value = settings.snakeColour;
         document.getElementById("fc_input").value = settings.fruitColour;
+        document.getElementById("key_left").innerHTML = settings.keyStrL;
+        document.getElementById("key_up").innerHTML = settings.keyStrU;
+        document.getElementById("key_right").innerHTML = settings.keyStrR;
+        document.getElementById("key_down").innerHTML = settings.keyStrD;
+        document.getElementById("key_pause").innerHTML = settings.keyStrP;
     } else {
         gv.style.display = "block";
         sv.style.display = "none";
@@ -312,22 +337,62 @@ function dirChange(e, newDir) {
     }
 }
 
+function bindKey(fn) {
+    var span = document.getElementById("key_" + fn);
+    span.innerHTML = "_";
+    keyToBind = fn;
+    document.addEventListener("keydown", bindEnteredKey);
+}
+
+function bindEnteredKey(e) {
+    var key = e.key;
+    var code = e.keyCode;
+    if (code == 32) {
+        key = "Space";
+    }
+    var span = document.getElementById("key_" + keyToBind);
+    switch (keyToBind) {
+        case "left":
+            newKeyBindings.keyL = code;
+            newKeyBindings.keyStrL = key;
+            break;
+        case "up":
+            newKeyBindings.keyU = code;
+            newKeyBindings.keyStrU = key;
+            break;
+        case "right":
+            newKeyBindings.keyR = code;
+            newKeyBindings.keyStrR = key;
+            break;
+        case "down":
+            newKeyBindings.keyD = code;
+            newKeyBindings.keyStrD = key;
+            break;
+        case "pause":
+            newKeyBindings.keyP = code;
+            newKeyBindings.keyStrP = key;
+            break;
+    }
+    span.innerHTML = key;
+    document.removeEventListener("keydown", bindEnteredKey);
+}
+
 function handleKeypress(e) {
     if (gameView) {
         switch (e.keyCode) {
-            case 37: // Left
+            case settings.keyL: // Left
                 dirChange(e, 0);
                 break;
-            case 38: // Up
+            case settings.keyU: // Up
                 dirChange(e, 1);
                 break;
-            case 39: // Right
+            case settings.keyR: // Right
                 dirChange(e, 2);
                 break;
-            case 40: // Down
+            case settings.keyD: // Down
                 dirChange(e, 3);
                 break;
-            case 80: // P for Pause
+            case settings.keyP: // P for Pause
                 togglePaused();
                 break;
             default:
