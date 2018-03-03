@@ -1,6 +1,6 @@
 
 div {
-    width: 420px;
+    width: 900px;
     margin: 0 auto;
     text-align: center;
 }
@@ -33,6 +33,7 @@ div {
 
 canvas {
     border: 1px solid black;
+    margin-bottom: 20px;
 }
 
 input[type=number] {

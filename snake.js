@@ -3,8 +3,6 @@
 var canvas, ctx;
 // Grid size - size of a square in pixels
 var gs = 20;
-// Grid count - number of squares in the grid
-var gc;
 // Frame rate in Hz
 var fr;
 // Coordinates of head of snake
@@ -32,14 +30,15 @@ var settings = {};
 var defaultSettings = {
     wrap: true,
     startFr: 10,
-    acceleration: 25
+    acceleration: 25,
+    ww: 21,
+    wh: 21
 };
 
 window.onload = function() {
     canvas = document.getElementById("snake_canvas");
     ctx = canvas.getContext("2d");
     // Grid count - should be 21 for canvas size 420.
-    gc = Math.floor(Math.max(canvas.width, canvas.height) / gs);
     document.addEventListener("keydown", handleKeypress);
     document.getElementById("apply_settings_btn").onclick = loadSettingsAndStart;
     document.getElementById("cancel_settings_btn").onclick = toggleSettingsView;
@@ -49,6 +48,8 @@ window.onload = function() {
 }
 
 function start() {
+    canvas.width = settings.ww * gs;
+    canvas.height = settings.wh * gs;
     clearTimeout(timer);
     snakeLength = 4;
     if (score > highscore) {
@@ -56,7 +57,8 @@ function start() {
     }
     score = 0;
     // Position of head of snake - initially centre of grid.
-    x = y = Math.floor(gc / 2);
+    x = Math.floor(settings.ww / 2);
+    y = Math.floor(settings.wh / 2);
     snake = [[x, y], [x, y + 1], [x, y + 2], [x, y + 3]];
     // Velocity
     vx = vy = 0;
@@ -85,16 +87,28 @@ function reset() {
 function loadSettingsAndStart() {
     // Load wrap setting
     settings.wrap = document.getElementById("wrap_cb").checked;
+    // Load world width
+    var wwInput = parseInt(document.getElementById("ww_input").value);
+    if (isNaN(wwInput) || !wwInput || wwInput < 7 || wwInput > 41) {
+        wwInput = document.getElementById("ww_input").value = defaultSettings.ww;
+    }
+    settings.ww = wwInput;
+    // Load world height
+    var whInput = parseInt(document.getElementById("wh_input").value);
+    if (isNaN(whInput) || !whInput || whInput < 7 || whInput > 41) {
+        whInput = document.getElementById("wh_input").value = defaultSettings.wh;
+    }
+    settings.wh = whInput;
     // Load starting frame rate
-    var frInput = document.getElementById("fr_input").value;
+    var frInput = parseInt(document.getElementById("fr_input").value);
     if (isNaN(frInput) || !frInput || frInput < 5 || frInput > 50) {
-        frInput = document.getElementById("fr_input").value = 12;
+        frInput = document.getElementById("fr_input").value = defaultSettings.startFr;
     }
     settings.startFr = frInput;
     // Load acceleration
-    var accInput = document.getElementById("acc_input").value;
+    var accInput = parseInt(document.getElementById("acc_input").value);
     if (isNaN(accInput) || !accInput || accInput < 0 || accInput > 100) {
-        accInput = document.getElementById("acc_input").value = 25;
+        accInput = document.getElementById("acc_input").value = defaultSettings.acceleration;
     }
     settings.acceleration = accInput;
     if (!gameView) {
@@ -111,8 +125,8 @@ function incrementGame() {
         // Game paused, so do nothing for now.
         return;
     }
-    var newX = (x + vx + gc) % gc;
-    var newY = (y + vy + gc) % gc;
+    var newX = (x + vx + settings.ww) % settings.ww;
+    var newY = (y + vy + settings.wh) % settings.wh;
     if (isDead(newX, newY)) {
         // If dead, pause graphics for a moment and then restart.
         draw();
@@ -162,8 +176,8 @@ function isDead(newX, newY) {
 }
 
 function generateFruit() {
-    fx = Math.floor(Math.random() * gc);
-    fy = Math.floor(Math.random() * gc);
+    fx = Math.floor(Math.random() * settings.ww);
+    fy = Math.floor(Math.random() * settings.wh);
     for (var i = 0; i < snake.length; i++) {
         // Don't generate fruit on top of snake.
         if (snake[i][0] == fx && snake[i][1] == fy) {
@@ -231,6 +245,8 @@ function toggleSettingsView() {
         document.getElementById("wrap_cb").checked = settings.wrap;
         document.getElementById("fr_input").value = settings.startFr;
         document.getElementById("acc_input").value = settings.acceleration;
+        document.getElementById("ww_input").value = settings.ww;
+        document.getElementById("wh_input").value = settings.wh;
     } else {
         gv.style.display = "block";
         sv.style.display = "none";
