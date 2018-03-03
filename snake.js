@@ -22,7 +22,8 @@ var storedKeypress;
 // Scores
 var score, highscore;
 // Direction changed in this frame, and whether game is paused
-var dirChanged = paused = false;
+var dirChanged = paused = running = false;
+var gameView = true;
 // Timer used by incrementGame()
 var timer;
 // Object used to store settings
@@ -40,7 +41,8 @@ window.onload = function() {
     // Grid count - should be 21 for canvas size 420.
     gc = Math.floor(Math.max(canvas.width, canvas.height) / gs);
     document.addEventListener("keydown", handleKeypress);
-    document.getElementById("settings_btn").onclick = loadSettingsAndStart;
+    document.getElementById("apply_settings_btn").onclick = loadSettingsAndStart;
+    document.getElementById("cancel_settings_btn").onclick = toggleSettingsView;
     reset();
 }
 
@@ -56,6 +58,7 @@ function start() {
     snake = [[x, y], [x, y + 1], [x, y + 2], [x, y + 3]];
     // Velocity
     vx = vy = 0;
+    running = false;
     // Direction = up
     dir = 1;
     // Reset frame rate
@@ -67,9 +70,6 @@ function start() {
 
 function reset() {
     settings = Object.assign({}, defaultSettings);
-    document.getElementById("wrap_cb").checked = settings.wrap;
-    document.getElementById("fr_input").value = settings.startFr;
-    document.getElementById("acc_input").value = settings.acceleration;
     score = highscore = 0;
     start();
 }
@@ -89,6 +89,12 @@ function loadSettingsAndStart() {
         accInput = document.getElementById("acc_input").value = 25;
     }
     settings.acceleration = accInput;
+    if (!gameView) {
+        toggleSettingsView();
+    }
+    if (paused) {
+        togglePaused();
+    }
     start();
 }
 
@@ -205,16 +211,23 @@ function draw() {
     drawSnake();
 }
 
-function toggleSettings() {
-    var inst = document.getElementById("instruction_div");
-    var set = document.getElementById("settings_div");
-    if (inst.style.display != "none") {
-        inst.style.display = "none";
-        set.style.display = "block";
+function toggleSettingsView() {
+    var gv = document.getElementById("game_view");
+    var sv = document.getElementById("settings_view");
+    if (gameView) {
+        if (running && !paused) {
+            togglePaused();
+        }
+        gv.style.display = "none";
+        sv.style.display = "block";
+        document.getElementById("wrap_cb").checked = settings.wrap;
+        document.getElementById("fr_input").value = settings.startFr;
+        document.getElementById("acc_input").value = settings.acceleration;
     } else {
-        inst.style.display = "block";
-        set.style.display = "none";
+        gv.style.display = "block";
+        sv.style.display = "none";
     }
+    gameView = !gameView;
 }
 
 function togglePaused() {
@@ -256,37 +269,40 @@ function dirChange(e, newDir) {
                 }
                 dir = newDir;
                 dirChanged = true;
-            } else if (vx == 0 && vy == 0) {
+            } else if (!running) {
                 // Game not yet started
                 vy = -1;
             }
+            running = true;
         }
     }
 
 }
 
 function handleKeypress(e) {
-    switch (e.keyCode) {
-        case 37: // Left
-            dirChange(e, 0);
-            break;
-        case 38: // Up
-            dirChange(e, 1);
-            break;
-        case 39: // Right
-            dirChange(e, 2);
-            break;
-        case 40: // Down
-            dirChange(e, 3);
-            break;
-        case 80: // P for Pause
-            togglePaused();
-            break;
-        case 82: // R for Reset
-            reset();
-            break;
-        case 83: // S for Settings
-            toggleSettings();
-            break;
+    if (gameView) {
+        switch (e.keyCode) {
+            case 37: // Left
+                dirChange(e, 0);
+                break;
+            case 38: // Up
+                dirChange(e, 1);
+                break;
+            case 39: // Right
+                dirChange(e, 2);
+                break;
+            case 40: // Down
+                dirChange(e, 3);
+                break;
+            case 80: // P for Pause
+                togglePaused();
+                break;
+            case 82: // R for Reset
+                reset();
+                break;
+            case 83: // S for Settings
+                toggleSettingsView();
+                break;
+        }
     }
 }

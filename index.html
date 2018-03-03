@@ -10,17 +10,19 @@
             <br><br>
             <div id="title_div">SNAKE</div>
             <br>
-            <div id="score_div"></div>
-            <canvas id="snake_canvas" width=420 height=420></canvas>
-            <div id="paused_div" style="display:none">PAUSED</div>
-            <div id="instruction_div">
-                <br>
-                Press any arrow key to begin.<br>
-                Press P to pause/continue.<br>
-                Press S to change game settings.<br>
-                Press R to reset.
+            <div id="game_view">
+                <div id="score_div"></div>
+                <canvas id="snake_canvas" width=420 height=420></canvas>
+                <div id="paused_div" style="display:none">PAUSED</div>
+                <div id="instruction_div">
+                    <br>
+                    Press any arrow key to begin.<br>
+                    Press P to pause/continue.<br>
+                    Press S to change game settings.<br>
+                    Press R to reset.
+                </div>
             </div>
-            <div id="settings_div" style="display:none">
+            <div id="settings_view" style="display:none">
                 <br>
                 <input type="checkbox" name="wrap" id="wrap_cb" checked>Wrap world
                 <br>
@@ -28,7 +30,8 @@
                 <br>
                 Acceleration: <input type="number" id="acc_input" min=0 max=100 value=25>
                 <br>
-                <button id="settings_btn">Apply</button>
+                <button id="cancel_settings_btn">Cancel</button>
+                <button id="apply_settings_btn">Apply</button>
             </div>
             <br><br>
             <div id="copyright_div">
