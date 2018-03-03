@@ -17,3 +17,7 @@ div {
     color: grey;
     font-size: small;
 }
+
+canvas {
+    border: 1px solid black;
+}
