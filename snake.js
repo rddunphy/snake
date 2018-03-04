@@ -193,7 +193,7 @@ function isDead(newX, newY) {
             return true;
         }
     }
-    for (var i = 1; i < snake.length; i++) {
+    for (var i = 1; i < snake.length - 1; i++) {
         if (newX == snake[i][0] && newY == snake[i][1]) {
             // You ate yourself.
             return true;
