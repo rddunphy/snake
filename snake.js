@@ -29,8 +29,8 @@ var settings = {};
 // Defaults
 var defaultSettings = {
     wrap: true,
-    startFr: 10,
-    acceleration: 25,
+    startFr: 12,
+    acceleration: 15,
     ww: 21,
     wh: 21,
     worldColour: "#C2DEA6",
