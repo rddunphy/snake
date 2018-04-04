@@ -31,6 +31,10 @@ div {
     font-size: small;
 }
 
+#copyright_div a {
+    color: grey;
+}
+
 canvas {
     border: 1px solid black;
     margin-bottom: 20px;
