@@ -20,7 +20,7 @@ var storedKeypress;
 // Scores
 var score, highscore;
 // Direction changed in this frame, and whether game is paused
-var dirChanged = paused = running = false;
+var dirChanged = paused = running = startQueued = false;
 var gameView = true;
 // Timer used by incrementGame()
 var timer;
@@ -69,6 +69,10 @@ window.onload = function() {
 }
 
 function start() {
+    if (paused) {
+        startQueued = true;
+        return;
+    }
     canvas.width = settings.ww * gs;
     canvas.height = settings.wh * gs;
     clearTimeout(timer);
@@ -414,6 +418,10 @@ function togglePaused() {
         x.style.display = "block";
     } else {
         x.style.display = "none";
+        if (startQueued) {
+            startQueued = false;
+            start();
+        }
         incrementGame();
     }
 }
