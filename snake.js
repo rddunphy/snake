@@ -35,6 +35,7 @@ var defaultSettings = {
     wh: 21,
     worldColour: "#C2DEA6",
     snakeColour: "#276A25",
+    patternColour: "#63361F",
     fruitColour: "#ff0000",
     keyL: 37,
     keyStrL: "ArrowLeft",
@@ -134,6 +135,7 @@ function loadSettingsAndStart() {
     // Load colour scheme
     settings.worldColour = document.getElementById("wc_input").value;
     settings.snakeColour = document.getElementById("sc_input").value;
+    settings.patternColour = document.getElementById("pc_input").value;
     settings.fruitColour = document.getElementById("fc_input").value;
     // Load key bindings
     Object.assign(settings, newKeyBindings);
@@ -202,6 +204,10 @@ function isDead(newX, newY) {
     return false;
 }
 
+function P(px, py) {
+    return {x: px, y: py};
+}
+
 function generateFruit() {
     fx = Math.floor(Math.random() * settings.ww);
     fy = Math.floor(Math.random() * settings.wh);
@@ -218,34 +224,145 @@ function drawFruit() {
     ctx.beginPath();
     ctx.arc((fx + 0.5) * gs, (fy + 0.5) * gs, 10, 0, 2 * Math.PI, false);
     ctx.fillStyle = settings.fruitColour;
-    ctx.fill()
+    ctx.fill();
+}
+
+function drawElement(elementFn, orientation, coords) {
+    var angle = (orientation - 1) * Math.PI/2;
+    var rp = {x: (coords.x + 0.5) * gs, y: (coords.y + 0.5) * gs};
+    ctx.translate(rp.x, rp.y);
+    ctx.rotate(angle);
+    ctx.translate(-rp.x, -rp.y);
+    elementFn(coords);
+    ctx.translate(rp.x, rp.y);
+    ctx.rotate(-angle);
+    ctx.translate(-rp.x, -rp.y);
+}
+
+function snakeHead(p) {
+    ctx.beginPath();
+    ctx.arc((p.x + 0.5) * gs, (p.y + 0.7) * gs, 9, Math.PI, 2 * Math.PI, false);
+    ctx.lineTo((p.x + 1) * gs - 1, (p.y + 1) * gs);
+    ctx.lineTo(p.x * gs + 1, (p.y + 1) * gs);
+    ctx.closePath();
+    ctx.fillStyle = settings.snakeColour;
+    ctx.fill();
+    // eyes
+    var eyeRad = 1;
+    ctx.beginPath();
+    ctx.arc((p.x + 0.3) * gs, (p.y + 0.8) * gs, eyeRad, 0, 2 * Math.PI, false);
+    ctx.fillStyle = "black";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc((p.x + 0.7) * gs, (p.y + 0.8) * gs, eyeRad, 0, 2 * Math.PI, false);
+    ctx.fill();
+    // tongue
+    ctx.beginPath();
+    var tongueRad = 0.18*gs;
+    ctx.arc((p.x+0.5)*gs - tongueRad, p.y*gs + tongueRad, tongueRad, -Math.PI/2, 0, false);
+    ctx.lineTo((p.x + 0.5) * gs, (p.y + 0.3) * gs);
+    ctx.arc((p.x+0.5)*gs + tongueRad, p.y*gs + tongueRad, tongueRad, Math.PI, 3*Math.PI/2, false);
+    ctx.strokeStyle = "red";
+    ctx.stroke();
+}
+
+function snakeStraightLink(p) {
+    ctx.fillStyle = settings.snakeColour;
+    ctx.fillRect(p.x*gs+1, p.y*gs, gs-2, gs);
+    ctx.beginPath();
+    var spotRad = 3;
+    ctx.arc((p.x+0.5)*gs, (p.y+0.5)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.fillStyle = settings.patternColour;
+    ctx.fill();
+}
+
+function snakeLeftTurnLink(p) {
+    ctx.beginPath();
+    ctx.arc(p.x*gs, (p.y+1)*gs, gs-1, -Math.PI/2, 0, false);
+    ctx.lineTo(p.x*gs + 1, (p.y+1)*gs);
+    ctx.lineTo(p.x*gs, (p.y+1)*gs - 1);
+    ctx.closePath();
+    ctx.fillStyle = settings.snakeColour;
+    ctx.fill();
+    ctx.beginPath();
+    var spotRad = 3;
+    ctx.arc((p.x+0.3)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.fillStyle = settings.patternColour;
+    ctx.fill();
+}
+
+function snakeRightTurnLink(p) {
+    ctx.beginPath();
+    ctx.arc((p.x+1)*gs, (p.y+1)*gs, gs-1, Math.PI, 3*Math.PI/2, false);
+    ctx.lineTo((p.x+1)*gs, (p.y+1)*gs - 1);
+    ctx.lineTo((p.x+1)*gs - 1, (p.y+1)*gs);
+    ctx.closePath();
+    ctx.fillStyle = settings.snakeColour;
+    ctx.fill();
+    ctx.beginPath();
+    var spotRad = 3;
+    ctx.arc((p.x+0.7)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.fillStyle = settings.patternColour;
+    ctx.fill();
+}
+
+function snakeTail(p) {
+    var tipRad = 3;
+    ctx.beginPath();
+    ctx.moveTo(p.x*gs + 1, p.y*gs);
+    ctx.lineTo((p.x+1)*gs - 1, p.y*gs);
+    ctx.lineTo((p.x+0.5)*gs+tipRad, (p.y+1)*gs-tipRad);
+    ctx.arc((p.x+0.5)*gs, (p.y+1)*gs-tipRad, tipRad, 0, Math.PI, false);
+    ctx.closePath();
+    ctx.fillStyle = settings.snakeColour;
+    ctx.fill();
+    ctx.beginPath();
+    var spotRad = 1.8;
+    ctx.arc((p.x+0.5)*gs, (p.y+0.25)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.fillStyle = settings.patternColour;
+    ctx.fill();
+}
+
+function getDir(p1, p2) {
+    // only works for adjacent points
+    if (p1.x == p2.x) {
+        if (p1.y == p2.y + 1 || (p1.y == 0 && p2.y == settings.wh - 1)) {
+            return 1; // up
+        }
+        return 3; // down
+    }
+    if (p1.x == p2.x + 1 || (p1.x == 0 && p2.x == settings.ww -1)) {
+        return 0; // left
+    }
+    return 2; // right
 }
 
 function drawSnake() {
-    ctx.fillStyle = settings.snakeColour;
     // Head
-    ctx.beginPath();
-    ctx.arc((x + 0.5) * gs, (y + 0.5) * gs, 9, (dir+1) * Math.PI / 2, (dir + 3) * Math.PI / 2, false);
-    var a = (dir > 1) ? 0 : 1;
-    var b = (dir == 1 || dir == 2) ? 1 : 0;
-    var c = (dir > 1) ? 1 : -1;
-    var d = (dir == 1 || dir == 2) ? -1 : 1;
-    ctx.lineTo((x + a) * gs + c, (y + b) * gs + d);
-    ctx.lineTo((x + 1 - b) * gs - d, (y + a) * gs + c);
-    ctx.closePath();
-    ctx.fill();
+    var p, pBefore, pAfter, dirFront, dirBack, link;
+    p = P(snake[0][0], snake[0][1]);
+    pAfter = P(snake[1][0], snake[1][1]);
+    dirBack = getDir(pAfter, p);
+    drawElement(snakeHead, dirBack, p);
     // Body
-    for (var i = 1; i < snake.length; i++) {
-        // Margin from edge of grid square
-        var m = 1
-        // Tail
-        if (i == snake.length - 2) {
-            m = 3;
-        } else if (i == snake.length - 1) {
-            m = 5;
+    for (var i = 1; i < snake.length-1; i++) {
+        p = P(snake[i][0], snake[i][1]);
+        pBefore = P(snake[i-1][0], snake[i-1][1]);
+        pAfter = P(snake[i+1][0], snake[i+1][1]);
+        dirFront = getDir(p, pBefore);
+        dirBack = getDir(pAfter, p);
+        link = snakeStraightLink;
+        if (dirFront == (dirBack+3)%4) {
+            link = snakeLeftTurnLink;
+        } else if (dirFront == (dirBack+1)%4) {
+            link = snakeRightTurnLink;
         }
-        ctx.fillRect(snake[i][0]*gs + m, snake[i][1]*gs + m, gs - 2*m, gs - 2*m);
+        drawElement(link, dirBack, p);
     }
+    p = P(snake[snake.length-1][0], snake[snake.length-1][1]);
+    pBefore = P(snake[snake.length-2][0], snake[snake.length-2][1]);
+    dirFront = getDir(p, pBefore);
+    drawElement(snakeTail, dirFront, p);
 }
 
 function draw() {
@@ -276,6 +393,7 @@ function toggleSettingsView() {
         document.getElementById("wh_input").value = settings.wh;
         document.getElementById("wc_input").value = settings.worldColour;
         document.getElementById("sc_input").value = settings.snakeColour;
+        document.getElementById("pc_input").value = settings.patternColour;
         document.getElementById("fc_input").value = settings.fruitColour;
         document.getElementById("key_left").innerHTML = settings.keyStrL;
         document.getElementById("key_up").innerHTML = settings.keyStrU;
