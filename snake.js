@@ -1,132 +1,145 @@
 
-
+// Grid size - width and height of a square in pixels
+const gs = 20;
 
 var game;
-// Grid size - size of a square in pixels
-const gs = 20;
-// Frame rate in Hz
-var fr;
-// Coordinates of head of snake
-// Direction of snake - left=0, up=1, right=2, down=3
-var dir;
-// Coordinates of fruit
-var fx, fy;
-// Last keypress event from previous frame
-var storedKeypress;
-// Scores
-var score, highscore;
-// Direction changed in this frame, and whether game is paused
-var dirChanged = paused = running = startQueued = false;
-var gameView = true;
-// Timer used by increment()
-var timer;
-// Object used to store settings
-var settings = {};
-// Defaults
-var defaultSettings = {
-    wrap: true,
-    startFr: 12,
-    acceleration: 15,
-    ww: 21,
-    wh: 21,
-    worldColour: "#C2DEA6",
-    snakeColour: "#276A25",
-    patternColour: "#63361F",
-    fruitColour: "#ff0000",
-    keyL: 37,
-    keyStrL: "ArrowLeft",
-    keyU: 38,
-    keyStrU: "ArrowUp",
-    keyR: 39,
-    keyStrR: "ArrowRight",
-    keyD: 40,
-    keyStrD: "ArrowDown",
-    keyP: 80,
-    keyStrP: "p"
-};
-newKeyBindings = {};
-keyToBind = "";
 
 
-function Point(px, py) {
-    this.x = px;
-    this.y = py;
-    this.equals = function(p) {
-        return this.x == p.x && this.y == p.y;
+var Point = (function() {
+    var Constructor = function(px, py) {
+        this.x = px;
+        this.y = py;
     };
-}
+
+    Constructor.prototype = {
+        equals: function(p) {
+            return this.x == p.x && this.y == p.y;
+        },
+
+        dir: function(p, ww, wh) {
+            // only works for adjacent points
+            if (this.x == p.x) {
+                if (this.y == p.y + 1 || (this.y == 0 && p.y == wh - 1)) {
+                    return 1; // up
+                }
+                return 3; // down
+            }
+            if (this.x == p.x + 1 || (this.x == 0 && p.x == ww -1)) {
+                return 0; // left
+            }
+            return 2; // right
+        }
+    };
+
+    return Constructor;
+})();
+
+
+var Settings = (function() {
+    var Constructor = function() {
+        this.wrap = true;
+        this.startFr = 12;
+        this.acceleration = 15;
+        this.ww = 21;
+        this.wh = 21;
+        this.worldColour = "#C2DEA6";
+        this.snakeColour = "#276A25";
+        this.patternColour = "#63361F";
+        this.fruitColour = "#ff0000";
+        this.keyL = 37;
+        this.keyStrL = "ArrowLeft";
+        this.keyU = 38;
+        this.keyStrU = "ArrowUp";
+        this.keyR = 39;
+        this.keyStrR = "ArrowRight";
+        this.keyD = 40;
+        this.keyStrD = "ArrowDown";
+        this.keyP = 80;
+        this.keyStrP = "p";
+        this.newKeyBindings = {};
+    };
+
+    Constructor.prototype = {};
+
+    return Constructor;
+})();
 
 
 var Game = (function() {
     var Constructor = function(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        // Direction changed in this frame, and whether game is paused
+        this.dirChanged = this.paused = this.startQueued = false;
+        this.inGameView = true;
     };
 
     Constructor.prototype = {
 
         reset: function() {
-            if (!gameView) {
-                toggleSettingsView();
+            if (!this.inGameView) {
+                this.toggleSettingsView();
             }
-            if (paused) {
-                togglePaused();
+            if (this.paused) {
+                this.togglePaused();
             }
-            settings = Object.assign({}, defaultSettings);
-            score = highscore = 0;
+            this.settings = new Settings();
+            this.score = this.highscore = 0;
             this.start();
         },
 
         loadSettingsAndStart: function() {
+            var defaultSettings = new Settings();
             // Load wrap setting
-            settings.wrap = document.getElementById("wrap_cb").checked;
+            this.settings.wrap = document.getElementById("wrap_cb").checked;
             // Load world width
             var wwInput = parseInt(document.getElementById("ww_input").value);
             if (isNaN(wwInput) || !wwInput || wwInput < 7 || wwInput > 41) {
                 wwInput = document.getElementById("ww_input").value = defaultSettings.ww;
             }
-            settings.ww = wwInput;
+            this.settings.ww = wwInput;
             // Load world height
             var whInput = parseInt(document.getElementById("wh_input").value);
             if (isNaN(whInput) || !whInput || whInput < 7 || whInput > 41) {
                 whInput = document.getElementById("wh_input").value = defaultSettings.wh;
             }
-            settings.wh = whInput;
+            this.settings.wh = whInput;
             // Load starting frame rate
             var frInput = parseInt(document.getElementById("fr_input").value);
             if (isNaN(frInput) || !frInput || frInput < 5 || frInput > 50) {
                 frInput = document.getElementById("fr_input").value = defaultSettings.startFr;
             }
-            settings.startFr = frInput;
+            this.settings.startFr = frInput;
             // Load acceleration
             var accInput = parseInt(document.getElementById("acc_input").value);
             if (isNaN(accInput) || !accInput || accInput < 0 || accInput > 100) {
                 accInput = document.getElementById("acc_input").value = defaultSettings.acceleration;
             }
-            settings.acceleration = accInput;
+            this.settings.acceleration = accInput;
             // Load colour scheme
-            settings.worldColour = document.getElementById("wc_input").value;
-            settings.snakeColour = document.getElementById("sc_input").value;
-            settings.patternColour = document.getElementById("pc_input").value;
-            settings.fruitColour = document.getElementById("fc_input").value;
+            this.settings.worldColour = document.getElementById("wc_input").value;
+            this.settings.snakeColour = document.getElementById("sc_input").value;
+            this.settings.patternColour = document.getElementById("pc_input").value;
+            this.settings.fruitColour = document.getElementById("fc_input").value;
             // Load key bindings
-            Object.assign(settings, newKeyBindings);
-            newKeyBindings = {};
-            if (!gameView) {
+            Object.assign(this.settings, this.settings.newKeyBindings);
+            this.settings.newKeyBindings = {};
+            if (!this.inGameView) {
                 this.toggleSettingsView();
             }
-            if (paused) {
+            if (this.paused) {
                 this.togglePaused();
             }
             this.start();
         },
 
         generateFruit: function() {
-            fx = Math.floor(Math.random() * settings.ww);
-            fy = Math.floor(Math.random() * settings.wh);
+            var fx = Math.floor(Math.random() * this.settings.ww);
+            var fy = Math.floor(Math.random() * this.settings.wh);
+            this.fruit = new Point(fx, fy);
             for (var i = 0; i < this.snake.length; i++) {
                 // Don't generate fruit on top of snake.
-                if (this.snake.occupies(new Point(fx, fy))) {
+                if (this.snake.occupies(this.fruit)) {
                     this.generateFruit();
                     return;
                 }
@@ -135,87 +148,86 @@ var Game = (function() {
 
         draw: function() {
             // Update score display
-            var scoreString = "Score: " + score + " - Highscore: " + highscore;
+            var scoreString = "Score: " + this.score + " - Highscore: " + this.highscore;
             document.getElementById("score_div").innerHTML = scoreString;
             // Draw background
-            this.ctx.fillStyle = settings.worldColour;
+            this.ctx.fillStyle = this.settings.worldColour;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             // The rest
-            drawElement(this.ctx, fruit, 0, new Point(fx, fy));
-            this.snake.draw(this.ctx);
+            drawElement(this.ctx, fruit, 0, this.fruit, this.settings);
+            this.snake.draw(this.ctx, this.settings);
         },
 
         increment: function() {
-            if (paused) {
+            if (this.paused) {
                 // Game paused, so do nothing for now.
                 return;
             }
-            var newHead = this.snake.next(settings.ww, settings.wh);
-            if (this.snake.isDead(newHead, settings.wrap)) {
+            var newHead = this.snake.next(this.settings.ww, this.settings.wh);
+            if (this.snake.isDead(newHead, this.settings.wrap)) {
                 // If dead, pause graphics for a moment and then restart.
                 this.draw();
-                timer = window.setTimeout(() => this.start(), 1500);
+                this.timer = window.setTimeout(() => this.start(), 1500);
                 return;
             }
-            var fruit = new Point(fx, fy);
-            var gotFruit = newHead.equals(fruit);
+            var gotFruit = newHead.equals(this.fruit);
             this.snake.move(newHead, gotFruit);
             if (gotFruit) {
                 // You ate the fruit.
                 this.generateFruit();
-                score++;
-                fr *= 1 + settings.acceleration / 1000;
+                this.score++;
+                this.fr *= 1 + this.settings.acceleration / 1000;
             }
             // Handle leftover keypresses from previous iteration
-            dirChanged = false;
-            if (storedKeypress != null) {
-                this.handleKeypress(storedKeypress);
-                storedKeypress = null;
+            this.dirChanged = false;
+            if (this.storedKeypress) {
+                this.handleKeypress(this.storedKeypress);
+                this.storedKeypress = null;
             }
             // Redraw the board.
             this.draw();
-            timer = window.setTimeout(() => this.increment(), 1000 / fr);
+            this.timer = window.setTimeout(() => this.increment(), 1000 / this.fr);
         },
 
         toggleSettingsView: function() {
             var gv = document.getElementById("game_view");
             var sv = document.getElementById("settings_view");
-            if (gameView) {
-                if (running && !paused) {
+            if (this.inGameView) {
+                if (!this.snake.stationary() && !this.paused) {
                     this.togglePaused();
                 }
                 gv.style.display = "none";
                 sv.style.display = "block";
-                document.getElementById("wrap_cb").checked = settings.wrap;
-                document.getElementById("fr_input").value = settings.startFr;
-                document.getElementById("acc_input").value = settings.acceleration;
-                document.getElementById("ww_input").value = settings.ww;
-                document.getElementById("wh_input").value = settings.wh;
-                document.getElementById("wc_input").value = settings.worldColour;
-                document.getElementById("sc_input").value = settings.snakeColour;
-                document.getElementById("pc_input").value = settings.patternColour;
-                document.getElementById("fc_input").value = settings.fruitColour;
-                document.getElementById("key_left").innerHTML = settings.keyStrL;
-                document.getElementById("key_up").innerHTML = settings.keyStrU;
-                document.getElementById("key_right").innerHTML = settings.keyStrR;
-                document.getElementById("key_down").innerHTML = settings.keyStrD;
-                document.getElementById("key_pause").innerHTML = settings.keyStrP;
+                document.getElementById("wrap_cb").checked = this.settings.wrap;
+                document.getElementById("fr_input").value = this.settings.startFr;
+                document.getElementById("acc_input").value = this.settings.acceleration;
+                document.getElementById("ww_input").value = this.settings.ww;
+                document.getElementById("wh_input").value = this.settings.wh;
+                document.getElementById("wc_input").value = this.settings.worldColour;
+                document.getElementById("sc_input").value = this.settings.snakeColour;
+                document.getElementById("pc_input").value = this.settings.patternColour;
+                document.getElementById("fc_input").value = this.settings.fruitColour;
+                document.getElementById("key_left").innerHTML = this.settings.keyStrL;
+                document.getElementById("key_up").innerHTML = this.settings.keyStrU;
+                document.getElementById("key_right").innerHTML = this.settings.keyStrR;
+                document.getElementById("key_down").innerHTML = this.settings.keyStrD;
+                document.getElementById("key_pause").innerHTML = this.settings.keyStrP;
             } else {
                 gv.style.display = "block";
                 sv.style.display = "none";
             }
-            gameView = !gameView;
+            this.inGameView = !this.inGameView;
         },
 
         togglePaused: function() {
-            paused = !paused;
+            this.paused = !this.paused;
             var x = document.getElementById("paused_div");
-            if (paused) {
+            if (this.paused) {
                 x.style.display = "block";
             } else {
                 x.style.display = "none";
-                if (startQueued) {
-                    startQueued = false;
+                if (this.startQueued) {
+                    this.startQueued = false;
                     this.start();
                 }
                 this.increment();
@@ -223,34 +235,12 @@ var Game = (function() {
         },
 
         dirChange: function(e, newDir) {
-            if (!paused) {
-                if (dirChanged) {
+            if (!this.paused) {
+                if (this.dirChanged) {
                     // Only change direction once per frame.
-                    storedKeypress = e;
+                    this.storedKeypress = e;
                 } else {
-                    var opp = (newDir + 2) % 4;
-                    if (dir != opp && dir != newDir) {
-                        switch (newDir) {
-                            case 0: // Left
-                                this.snake.v = new Point(-1, 0);
-                                break;
-                            case 1: // Up
-                                this.snake.v = new Point(0, -1);
-                                break;
-                            case 2: // Right
-                                this.snake.v = new Point(1, 0);
-                                break;
-                            case 3: // Down
-                                this.snake.v = new Point(0, 1);
-                                break;
-                        }
-                        dir = newDir;
-                        dirChanged = true;
-                    } else if (!running) {
-                        // Game not yet started and up entered
-                        this.snake.v = new Point(0, -1);
-                    }
-                    running = true;
+                    this.dirChanged = this.snake.changeDir(newDir);
                 }
             }
         },
@@ -258,59 +248,26 @@ var Game = (function() {
         bindKey: function(fn) {
             var span = document.getElementById("key_" + fn);
             span.innerHTML = "_";
-            keyToBind = fn;
+            this.keyToBind = fn;
             document.addEventListener("keydown", bindEnteredKey);
         },
 
-        bindEnteredKey: function(e) {
-            var key = e.key;
-            var code = e.keyCode;
-            if (code == 32) {
-                key = "Space";
-            }
-            var span = document.getElementById("key_" + keyToBind);
-            switch (keyToBind) {
-                case "left":
-                    newKeyBindings.keyL = code;
-                    newKeyBindings.keyStrL = key;
-                    break;
-                case "up":
-                    newKeyBindings.keyU = code;
-                    newKeyBindings.keyStrU = key;
-                    break;
-                case "right":
-                    newKeyBindings.keyR = code;
-                    newKeyBindings.keyStrR = key;
-                    break;
-                case "down":
-                    newKeyBindings.keyD = code;
-                    newKeyBindings.keyStrD = key;
-                    break;
-                case "pause":
-                    newKeyBindings.keyP = code;
-                    newKeyBindings.keyStrP = key;
-                    break;
-            }
-            span.innerHTML = key;
-            document.removeEventListener("keydown", bindEnteredKey);
-        },
-
         handleKeypress: function(e) {
-            if (gameView) {
+            if (this.inGameView) {
                 switch (e.keyCode) {
-                    case settings.keyL: // Left
+                    case this.settings.keyL: // Left
                         this.dirChange(e, 0);
                         break;
-                    case settings.keyU: // Up
+                    case this.settings.keyU: // Up
                         this.dirChange(e, 1);
                         break;
-                    case settings.keyR: // Right
+                    case this.settings.keyR: // Right
                         this.dirChange(e, 2);
                         break;
-                    case settings.keyD: // Down
+                    case this.settings.keyD: // Down
                         this.dirChange(e, 3);
                         break;
-                    case settings.keyP: // P for Pause
+                    case this.settings.keyP: // P for Pause
                         this.togglePaused();
                         break;
                     default:
@@ -322,34 +279,32 @@ var Game = (function() {
         },
 
         start: function() {
-            if (paused) {
-                startQueued = true;
+            if (this.paused) {
+                this.startQueued = true;
                 return;
             }
-            this.canvas.width = settings.ww * gs;
-            this.canvas.height = settings.wh * gs;
-            clearTimeout(timer);
-            if (score > highscore) {
-                highscore = score;
+            this.canvas.width = this.settings.ww * gs;
+            this.canvas.height = this.settings.wh * gs;
+            clearTimeout(this.timer);
+            if (this.score > this.highscore) {
+                this.highscore = this.score;
             }
-            score = 0;
+            this.score = 0;
             // Position of head of snake - initially centre of grid.
-            x = Math.floor(settings.ww / 2);
-            y = Math.floor(settings.wh / 2);
+            x = Math.floor(this.settings.ww / 2);
+            y = Math.floor(this.settings.wh / 2);
             this.snake = new Snake(new Point(x, y));
-            // Direction = up
-            dir = 1;
-            running = false;
             // Reset frame rate
-            fr = settings.startFr;
+            this.fr = this.settings.startFr;
             this.generateFruit();
-            storedKeypress = null;
+            this.storedKeypress = null;
             this.increment();
         }
     };
 
     return Constructor;
 })();
+
 
 var Snake = (function() {
     var Constructor = function(head) {
@@ -358,8 +313,9 @@ var Snake = (function() {
         for (var i = 0; i < 4; i++) {
             this.cells.push(new Point(head.x, head.y + i));
         }
-        this.v = new Point(0, 0);
         this.length = 4;
+        this.v = new Point(0, 0);
+        this.dir = 1;
     };
 
     Constructor.prototype = {
@@ -412,25 +368,52 @@ var Snake = (function() {
             }
         },
 
-        draw: function(ctx) {
+        changeDir: function(newDir) {
+            var opp = (newDir + 2) % 4;
+            if (this.dir != opp && this.dir != newDir) {
+                switch (newDir) {
+                    case 0: // Left
+                        this.v = new Point(-1, 0);
+                        break;
+                    case 1: // Up
+                        this.v = new Point(0, -1);
+                        break;
+                    case 2: // Right
+                        this.v = new Point(1, 0);
+                        break;
+                    case 3: // Down
+                        this.v = new Point(0, 1);
+                        break;
+                }
+                this.dir = newDir;
+                return true;
+            } else if (this.stationary()) {
+                // Game not yet started and up entered
+                this.v = new Point(0, -1);
+                return true;
+            }
+            return false;
+        },
+
+        draw: function(ctx, settings) {
             // Head
             var dirFront, dirBack, link;
-            dirBack = getDir(this.cells[1], this.head);
-            drawElement(ctx, snakeHead, dirBack, this.head);
+            dirBack = this.cells[1].dir(this.head, settings.ww, settings.wh);
+            drawElement(ctx, snakeHead, dirBack, this.head, settings);
             // Body
             for (var i = 1; i < this.length-1; i++) {
-                dirFront = getDir(this.cells[i], this.cells[i-1]);
-                dirBack = getDir(this.cells[i+1], this.cells[i]);
+                dirFront = this.cells[i].dir(this.cells[i-1], settings.ww, settings.wh);
+                dirBack = this.cells[i+1].dir(this.cells[i], settings.ww, settings.wh);
                 link = snakeStraightLink;
                 if (dirFront == (dirBack+3) % 4) {
                     link = snakeLeftTurnLink;
                 } else if (dirFront == (dirBack+1) % 4) {
                     link = snakeRightTurnLink;
                 }
-                drawElement(ctx, link, dirBack, this.cells[i]);
+                drawElement(ctx, link, dirBack, this.cells[i], settings);
             }
-            dirFront = getDir(this.cells[this.length - 1], this.cells[this.length - 2]);
-            drawElement(ctx, snakeTail, dirFront, this.cells[this.length - 1]);
+            dirFront = this.cells[this.length - 1].dir(this.cells[this.length - 2], settings.ww, settings.wh);
+            drawElement(ctx, snakeTail, dirFront, this.cells[this.length - 1], settings);
         }
     };
 
@@ -438,15 +421,14 @@ var Snake = (function() {
 })();
 
 
-
-function fruit(ctx, p) {
+function fruit(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc((p.x + 0.5) * gs, (p.y + 0.5) * gs, 10, 0, 2 * Math.PI, false);
     ctx.fillStyle = settings.fruitColour;
     ctx.fill();
 }
 
-function snakeHead(ctx, p) {
+function snakeHead(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc((p.x + 0.5) * gs, (p.y + 0.7) * gs, 9, Math.PI, 2 * Math.PI, false);
     ctx.lineTo((p.x + 1) * gs - 1, (p.y + 1) * gs);
@@ -473,7 +455,7 @@ function snakeHead(ctx, p) {
     ctx.stroke();
 }
 
-function snakeStraightLink(ctx, p) {
+function snakeStraightLink(ctx, p, settings) {
     ctx.fillStyle = settings.snakeColour;
     ctx.fillRect(p.x*gs+1, p.y*gs, gs-2, gs);
     ctx.beginPath();
@@ -483,7 +465,7 @@ function snakeStraightLink(ctx, p) {
     ctx.fill();
 }
 
-function snakeLeftTurnLink(ctx, p) {
+function snakeLeftTurnLink(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc(p.x*gs, (p.y+1)*gs, gs-1, -Math.PI/2, 0, false);
     ctx.lineTo(p.x*gs + 1, (p.y+1)*gs);
@@ -498,7 +480,7 @@ function snakeLeftTurnLink(ctx, p) {
     ctx.fill();
 }
 
-function snakeRightTurnLink(ctx, p) {
+function snakeRightTurnLink(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc((p.x+1)*gs, (p.y+1)*gs, gs-1, Math.PI, 3*Math.PI/2, false);
     ctx.lineTo((p.x+1)*gs, (p.y+1)*gs - 1);
@@ -513,7 +495,7 @@ function snakeRightTurnLink(ctx, p) {
     ctx.fill();
 }
 
-function snakeTail(ctx, p) {
+function snakeTail(ctx, p, settings) {
     var tipRad = 3;
     ctx.beginPath();
     ctx.moveTo(p.x*gs + 1, p.y*gs);
@@ -530,27 +512,46 @@ function snakeTail(ctx, p) {
     ctx.fill();
 }
 
-function getDir(p1, p2) {
-    // only works for adjacent points
-    if (p1.x == p2.x) {
-        if (p1.y == p2.y + 1 || (p1.y == 0 && p2.y == settings.wh - 1)) {
-            return 1; // up
-        }
-        return 3; // down
+function bindEnteredKey(e) {
+    var key = e.key;
+    var code = e.keyCode;
+    if (code == 32) {
+        key = "Space";
     }
-    if (p1.x == p2.x + 1 || (p1.x == 0 && p2.x == settings.ww -1)) {
-        return 0; // left
+    var span = document.getElementById("key_" + game.keyToBind);
+    switch (game.keyToBind) {
+        case "left":
+            game.settings.newKeyBindings.keyL = code;
+            game.settings.newKeyBindings.keyStrL = key;
+            break;
+        case "up":
+            game.settings.newKeyBindings.keyU = code;
+            game.settings.newKeyBindings.keyStrU = key;
+            break;
+        case "right":
+            game.settings.newKeyBindings.keyR = code;
+            game.settings.newKeyBindings.keyStrR = key;
+            break;
+        case "down":
+            game.settings.newKeyBindings.keyD = code;
+            game.settings.newKeyBindings.keyStrD = key;
+            break;
+        case "pause":
+            game.settings.newKeyBindings.keyP = code;
+            game.settings.newKeyBindings.keyStrP = key;
+            break;
     }
-    return 2; // right
+    span.innerHTML = key;
+    document.removeEventListener("keydown", bindEnteredKey);
 }
 
-function drawElement(ctx, elementFn, orientation, coords) {
+function drawElement(ctx, elementFn, orientation, coords, settings) {
     var angle = (orientation - 1) * Math.PI/2;
-    var rp = {x: (coords.x + 0.5) * gs, y: (coords.y + 0.5) * gs};
+    var rp = new Point((coords.x + 0.5) * gs, (coords.y + 0.5) * gs);
     ctx.translate(rp.x, rp.y);
     ctx.rotate(angle);
     ctx.translate(-rp.x, -rp.y);
-    elementFn(ctx, coords);
+    elementFn(ctx, coords, settings);
     ctx.translate(rp.x, rp.y);
     ctx.rotate(-angle);
     ctx.translate(-rp.x, -rp.y);
@@ -565,10 +566,10 @@ window.onload = function() {
     document.getElementById("cancel_settings_btn").onclick = () => game.toggleSettingsView();
     document.getElementById("reset_btn").onclick = () => game.reset();
     document.getElementById("settings_btn").onclick = () => game.toggleSettingsView();
-    document.getElementById("key_left").onclick = function() {bindKey("left");};
-    document.getElementById("key_right").onclick = function() {bindKey("right");};
-    document.getElementById("key_up").onclick = function() {bindKey("up");};
-    document.getElementById("key_down").onclick = function() {bindKey("down");};
-    document.getElementById("key_pause").onclick = function() {bindKey("pause");};
+    document.getElementById("key_left").onclick = function() {game.bindKey("left");};
+    document.getElementById("key_right").onclick = function() {game.bindKey("right");};
+    document.getElementById("key_up").onclick = function() {game.bindKey("up");};
+    document.getElementById("key_down").onclick = function() {game.bindKey("down");};
+    document.getElementById("key_pause").onclick = function() {game.bindKey("pause");};
     game.reset();
 }
