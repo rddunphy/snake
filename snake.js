@@ -3,19 +3,14 @@
 
 var game;
 // Grid size - size of a square in pixels
-var gs = 20;
+const gs = 20;
 // Frame rate in Hz
 var fr;
 // Coordinates of head of snake
-var x, y;
-// Velocity of snake
-var vx, vy;
 // Direction of snake - left=0, up=1, right=2, down=3
 var dir;
 // Coordinates of fruit
 var fx, fy;
-// Array of snake coordinates and length of snake
-var snake, snakeLength;
 // Last keypress event from previous frame
 var storedKeypress;
 // Scores
@@ -53,9 +48,12 @@ newKeyBindings = {};
 keyToBind = "";
 
 
-function P(px, py) {
+function Point(px, py) {
     this.x = px;
     this.y = py;
+    this.equals = function(p) {
+        return this.x == p.x && this.y == p.y;
+    };
 }
 
 
@@ -126,53 +124,13 @@ var Game = (function() {
         generateFruit: function() {
             fx = Math.floor(Math.random() * settings.ww);
             fy = Math.floor(Math.random() * settings.wh);
-            for (var i = 0; i < snake.length; i++) {
+            for (var i = 0; i < this.snake.length; i++) {
                 // Don't generate fruit on top of snake.
-                if (snake[i][0] == fx && snake[i][1] == fy) {
+                if (this.snake.occupies(new Point(fx, fy))) {
                     this.generateFruit();
                     return;
                 }
             }
-        },
-
-        drawElement: function(elementFn, orientation, coords) {
-            var angle = (orientation - 1) * Math.PI/2;
-            var rp = {x: (coords.x + 0.5) * gs, y: (coords.y + 0.5) * gs};
-            this.ctx.translate(rp.x, rp.y);
-            this.ctx.rotate(angle);
-            this.ctx.translate(-rp.x, -rp.y);
-            elementFn(this, this.ctx, coords);
-            this.ctx.translate(rp.x, rp.y);
-            this.ctx.rotate(-angle);
-            this.ctx.translate(-rp.x, -rp.y);
-        },
-
-        drawSnake: function() {
-            // Head
-            var p, pBefore, pAfter, dirFront, dirBack, link;
-            p = new P(snake[0][0], snake[0][1]);
-            pAfter = new P(snake[1][0], snake[1][1]);
-            dirBack = getDir(pAfter, p);
-            this.drawElement(snakeHead, dirBack, p);
-            // Body
-            for (var i = 1; i < snake.length-1; i++) {
-                p = new P(snake[i][0], snake[i][1]);
-                pBefore = new P(snake[i-1][0], snake[i-1][1]);
-                pAfter = new P(snake[i+1][0], snake[i+1][1]);
-                dirFront = getDir(p, pBefore);
-                dirBack = getDir(pAfter, p);
-                link = snakeStraightLink;
-                if (dirFront == (dirBack+3)%4) {
-                    link = snakeLeftTurnLink;
-                } else if (dirFront == (dirBack+1)%4) {
-                    link = snakeRightTurnLink;
-                }
-                this.drawElement(link, dirBack, p);
-            }
-            p = new P(snake[snake.length-1][0], snake[snake.length-1][1]);
-            pBefore = new P(snake[snake.length-2][0], snake[snake.length-2][1]);
-            dirFront = getDir(p, pBefore);
-            this.drawElement(snakeTail, dirFront, p);
         },
 
         draw: function() {
@@ -183,8 +141,8 @@ var Game = (function() {
             this.ctx.fillStyle = settings.worldColour;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             // The rest
-            this.drawElement(fruit, 0, new P(fx, fy));
-            this.drawSnake();
+            drawElement(this.ctx, fruit, 0, new Point(fx, fy));
+            this.snake.draw(this.ctx);
         },
 
         increment: function() {
@@ -192,29 +150,22 @@ var Game = (function() {
                 // Game paused, so do nothing for now.
                 return;
             }
-            var newX = (x + vx + settings.ww) % settings.ww;
-            var newY = (y + vy + settings.wh) % settings.wh;
-            if (new Snake().isDead(newX, newY)) {
+            var newHead = this.snake.next(settings.ww, settings.wh);
+            if (this.snake.isDead(newHead, settings.wrap)) {
                 // If dead, pause graphics for a moment and then restart.
                 this.draw();
                 timer = window.setTimeout(() => this.start(), 1500);
                 return;
             }
-            x = newX;
-            y = newY;
-            if (vx != 0 || vy != 0) {
-                // Move head forward
-                snake.unshift([x, y]);
-            }
-            if (x == fx && y == fy) {
+            var fruit = new Point(fx, fy);
+            var gotFruit = newHead.equals(fruit);
+            this.snake.move(newHead, gotFruit);
+            if (gotFruit) {
                 // You ate the fruit.
                 this.generateFruit();
-                snakeLength++;
                 score++;
                 fr *= 1 + settings.acceleration / 1000;
             }
-            // Chop off tail
-            snake = snake.slice(0, snakeLength);
             // Handle leftover keypresses from previous iteration
             dirChanged = false;
             if (storedKeypress != null) {
@@ -281,27 +232,23 @@ var Game = (function() {
                     if (dir != opp && dir != newDir) {
                         switch (newDir) {
                             case 0: // Left
-                                vx = -1;
-                                vy = 0;
+                                this.snake.v = new Point(-1, 0);
                                 break;
                             case 1: // Up
-                                vx = 0;
-                                vy = -1;
+                                this.snake.v = new Point(0, -1);
                                 break;
                             case 2: // Right
-                                vx = 1;
-                                vy = 0;
+                                this.snake.v = new Point(1, 0);
                                 break;
                             case 3: // Down
-                                vx = 0;
-                                vy = 1;
+                                this.snake.v = new Point(0, 1);
                                 break;
                         }
                         dir = newDir;
                         dirChanged = true;
                     } else if (!running) {
-                        // Game not yet started
-                        vy = -1;
+                        // Game not yet started and up entered
+                        this.snake.v = new Point(0, -1);
                     }
                     running = true;
                 }
@@ -382,7 +329,6 @@ var Game = (function() {
             this.canvas.width = settings.ww * gs;
             this.canvas.height = settings.wh * gs;
             clearTimeout(timer);
-            snakeLength = 4;
             if (score > highscore) {
                 highscore = score;
             }
@@ -390,12 +336,10 @@ var Game = (function() {
             // Position of head of snake - initially centre of grid.
             x = Math.floor(settings.ww / 2);
             y = Math.floor(settings.wh / 2);
-            snake = [[x, y], [x, y + 1], [x, y + 2], [x, y + 3]];
-            // Velocity
-            vx = vy = 0;
-            running = false;
+            this.snake = new Snake(new Point(x, y));
             // Direction = up
             dir = 1;
+            running = false;
             // Reset frame rate
             fr = settings.startFr;
             this.generateFruit();
@@ -408,37 +352,101 @@ var Game = (function() {
 })();
 
 var Snake = (function() {
-    var Constructor = function() {};
+    var Constructor = function(head) {
+        this.head = head;
+        this.cells = [];
+        for (var i = 0; i < 4; i++) {
+            this.cells.push(new Point(head.x, head.y + i));
+        }
+        this.v = new Point(0, 0);
+        this.length = 4;
+    };
+
     Constructor.prototype = {
-        isDead: function(newX, newY) {
-            if (!settings.wrap) {
-                if (Math.abs(newX - snake[0][0]) > 1 || Math.abs(newY - snake[0][1]) > 1) {
+        isDead: function(newHead, wrap) {
+            if (!wrap) {
+                if (Math.abs(newHead.x - this.head.x) > 1 ||
+                    Math.abs(newHead.y - this.head.y) > 1) {
                     // You hit the wall.
                     return true;
                 }
             }
-            for (var i = 1; i < snake.length - 1; i++) {
-                if (newX == snake[i][0] && newY == snake[i][1]) {
+            for (var i = 1; i < this.length - 1; i++) {
+                if (newHead.x == this.cells[i].x && newHead.y == this.cells[i].y) {
                     // You ate yourself.
                     return true;
                 }
             }
             return false;
+        },
+
+        occupies: function(cell) {
+            for (var i = 0; i < this.length; i++) {
+                if (this.cells[i].equals(cell)) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
+        next: function(ww, wh) {
+            var newX = (this.head.x + this.v.x + ww) % ww;
+            var newY = (this.head.y + this.v.y + wh) % wh;
+            return new Point(newX, newY);
+        },
+
+        stationary: function() {
+            return this.v.x == 0 && this.v.y == 0;
+        },
+
+        move: function(cell, gotFruit) {
+            if (!this.stationary()) {
+                // Move head forward
+                this.head = cell;
+                this.cells.unshift(cell);
+                if (gotFruit) {
+                    this.length++;
+                }
+                // Chop off tail
+                this.cells = this.cells.slice(0, this.length);
+            }
+        },
+
+        draw: function(ctx) {
+            // Head
+            var dirFront, dirBack, link;
+            dirBack = getDir(this.cells[1], this.head);
+            drawElement(ctx, snakeHead, dirBack, this.head);
+            // Body
+            for (var i = 1; i < this.length-1; i++) {
+                dirFront = getDir(this.cells[i], this.cells[i-1]);
+                dirBack = getDir(this.cells[i+1], this.cells[i]);
+                link = snakeStraightLink;
+                if (dirFront == (dirBack+3) % 4) {
+                    link = snakeLeftTurnLink;
+                } else if (dirFront == (dirBack+1) % 4) {
+                    link = snakeRightTurnLink;
+                }
+                drawElement(ctx, link, dirBack, this.cells[i]);
+            }
+            dirFront = getDir(this.cells[this.length - 1], this.cells[this.length - 2]);
+            drawElement(ctx, snakeTail, dirFront, this.cells[this.length - 1]);
         }
     };
+
     return Constructor;
 })();
 
 
 
-function fruit(game, ctx, p) {
+function fruit(ctx, p) {
     ctx.beginPath();
     ctx.arc((p.x + 0.5) * gs, (p.y + 0.5) * gs, 10, 0, 2 * Math.PI, false);
     ctx.fillStyle = settings.fruitColour;
     ctx.fill();
 }
 
-function snakeHead(game, ctx, p) {
+function snakeHead(ctx, p) {
     ctx.beginPath();
     ctx.arc((p.x + 0.5) * gs, (p.y + 0.7) * gs, 9, Math.PI, 2 * Math.PI, false);
     ctx.lineTo((p.x + 1) * gs - 1, (p.y + 1) * gs);
@@ -465,7 +473,7 @@ function snakeHead(game, ctx, p) {
     ctx.stroke();
 }
 
-function snakeStraightLink(game, ctx, p) {
+function snakeStraightLink(ctx, p) {
     ctx.fillStyle = settings.snakeColour;
     ctx.fillRect(p.x*gs+1, p.y*gs, gs-2, gs);
     ctx.beginPath();
@@ -475,7 +483,7 @@ function snakeStraightLink(game, ctx, p) {
     ctx.fill();
 }
 
-function snakeLeftTurnLink(game, ctx, p) {
+function snakeLeftTurnLink(ctx, p) {
     ctx.beginPath();
     ctx.arc(p.x*gs, (p.y+1)*gs, gs-1, -Math.PI/2, 0, false);
     ctx.lineTo(p.x*gs + 1, (p.y+1)*gs);
@@ -490,7 +498,7 @@ function snakeLeftTurnLink(game, ctx, p) {
     ctx.fill();
 }
 
-function snakeRightTurnLink(game, ctx, p) {
+function snakeRightTurnLink(ctx, p) {
     ctx.beginPath();
     ctx.arc((p.x+1)*gs, (p.y+1)*gs, gs-1, Math.PI, 3*Math.PI/2, false);
     ctx.lineTo((p.x+1)*gs, (p.y+1)*gs - 1);
@@ -505,7 +513,7 @@ function snakeRightTurnLink(game, ctx, p) {
     ctx.fill();
 }
 
-function snakeTail(game, ctx, p) {
+function snakeTail(ctx, p) {
     var tipRad = 3;
     ctx.beginPath();
     ctx.moveTo(p.x*gs + 1, p.y*gs);
@@ -536,6 +544,17 @@ function getDir(p1, p2) {
     return 2; // right
 }
 
+function drawElement(ctx, elementFn, orientation, coords) {
+    var angle = (orientation - 1) * Math.PI/2;
+    var rp = {x: (coords.x + 0.5) * gs, y: (coords.y + 0.5) * gs};
+    ctx.translate(rp.x, rp.y);
+    ctx.rotate(angle);
+    ctx.translate(-rp.x, -rp.y);
+    elementFn(ctx, coords);
+    ctx.translate(rp.x, rp.y);
+    ctx.rotate(-angle);
+    ctx.translate(-rp.x, -rp.y);
+}
 
 window.onload = function() {
     var canvas = document.getElementById("snake_canvas");
