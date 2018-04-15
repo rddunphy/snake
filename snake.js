@@ -229,8 +229,9 @@ var Game = (function() {
                 if (this.startQueued) {
                     this.startQueued = false;
                     this.start();
+                } else {
+                    this.increment();
                 }
-                this.increment();
             }
         },
 
@@ -560,7 +561,6 @@ function drawElement(ctx, elementFn, orientation, coords, settings) {
 window.onload = function() {
     var canvas = document.getElementById("snake_canvas");
     game = new Game(canvas);
-    // Grid count - should be 21 for canvas size 420.
     document.addEventListener("keydown", (e) => game.handleKeypress(e));
     document.getElementById("apply_settings_btn").onclick = () => game.loadSettingsAndStart();
     document.getElementById("cancel_settings_btn").onclick = () => game.toggleSettingsView();
