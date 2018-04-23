@@ -1,0 +1,22 @@
+function Settings() {
+    this.wrap = true;
+    this.startFr = 12;
+    this.acceleration = 15;
+    this.ww = 21;
+    this.wh = 21;
+    this.worldColour = "#C2DEA6";
+    this.snakeColour = "#276A25";
+    this.patternColour = "#63361F";
+    this.fruitColour = "#ff0000";
+    this.keyL = 37;
+    this.keyStrL = "ArrowLeft";
+    this.keyU = 38;
+    this.keyStrU = "ArrowUp";
+    this.keyR = 39;
+    this.keyStrR = "ArrowRight";
+    this.keyD = 40;
+    this.keyStrD = "ArrowDown";
+    this.keyP = 80;
+    this.keyStrP = "p";
+    this.newKeyBindings = {};
+}
