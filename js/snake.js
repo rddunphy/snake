@@ -84,11 +84,12 @@ Snake.prototype.changeDir = function(newDir) {
     return false;
 };
 
-Snake.prototype.draw = function(ctx, settings) {
+Snake.prototype.getElements = function(settings) {
+    var elements = [];
     // Head
     var dirFront, dirBack, link;
     dirBack = this.cells[1].dir(this.head, settings.ww, settings.wh);
-    drawElement(ctx, this.drawHead, dirBack, this.head, settings);
+    elements.push({cell: this.head, dir: dirBack, fn: this.drawHead});
     // Body
     for (var i = 1; i < this.length-1; i++) {
         dirFront = this.cells[i].dir(this.cells[i-1], settings.ww, settings.wh);
@@ -99,13 +100,14 @@ Snake.prototype.draw = function(ctx, settings) {
         } else if (dirFront == Dir.properties[dirBack].cw) {
             link = this.drawRightTurnLink;
         }
-        drawElement(ctx, link, dirBack, this.cells[i], settings);
+        elements.push({cell: this.cells[i], dir: dirBack, fn: link});
     }
     dirFront = this.cells[this.length - 1].dir(this.cells[this.length - 2], settings.ww, settings.wh);
-    drawElement(ctx, this.drawTail, dirFront, this.cells[this.length - 1], settings);
-};
+    elements.push({cell: this.cells[this.length - 1], dir: dirFront, fn: this.drawTail});
+    return elements;
+}
 
-// Snake part draw functions
+// Snake link draw functions
 
 Snake.prototype.drawHead = function(ctx, p, settings) {
     ctx.beginPath();

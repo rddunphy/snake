@@ -83,10 +83,25 @@ Game.prototype.draw = function() {
     // Draw background
     this.ctx.fillStyle = this.settings.worldColour;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    // The rest
-    drawElement(this.ctx, this.fruit.draw, null, this.fruit.cell, this.settings);
-    this.snake.draw(this.ctx, this.settings);
+    // Fruit
+    this.drawElement(this.fruit.draw, null, this.fruit.cell, this.settings);
+    // Snake
+    this.snake.getElements(this.settings).forEach(function(e) {
+        this.drawElement(e.fn, e.dir, e.cell, this.settings);
+    }, this);
 };
+
+Game.prototype.drawElement = function(elementFn, orientation, coords, settings) {
+    var angle = orientation ? Dir.properties[orientation].angle : 0;
+    var rp = new Cell((coords.x + 0.5) * gs, (coords.y + 0.5) * gs);
+    this.ctx.translate(rp.x, rp.y);
+    this.ctx.rotate(angle);
+    this.ctx.translate(-rp.x, -rp.y);
+    elementFn(this.ctx, coords, settings);
+    this.ctx.translate(rp.x, rp.y);
+    this.ctx.rotate(-angle);
+    this.ctx.translate(-rp.x, -rp.y);
+}
 
 Game.prototype.increment = function() {
     if (this.paused) {
