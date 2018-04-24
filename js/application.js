@@ -1,19 +1,12 @@
 
-// Grid size - width and height of a square in pixels
+// Grid size - width and height of a cell in pixels
 const gs = 20;
 
 var game;
 
-function fruit(ctx, p, settings) {
-    ctx.beginPath();
-    ctx.arc((p.x + 0.5) * gs, (p.y + 0.5) * gs, 10, 0, 2 * Math.PI, false);
-    ctx.fillStyle = settings.fruitColour;
-    ctx.fill();
-}
-
 function drawElement(ctx, elementFn, orientation, coords, settings) {
-    var angle = (orientation - 1) * Math.PI/2;
-    var rp = new Point((coords.x + 0.5) * gs, (coords.y + 0.5) * gs);
+    var angle = orientation ? Dir.properties[orientation].angle : 0;
+    var rp = new Cell((coords.x + 0.5) * gs, (coords.y + 0.5) * gs);
     ctx.translate(rp.x, rp.y);
     ctx.rotate(angle);
     ctx.translate(-rp.x, -rp.y);

@@ -66,10 +66,10 @@ Game.prototype.loadSettingsAndStart = function() {
 Game.prototype.generateFruit = function() {
     var fx = Math.floor(Math.random() * this.settings.ww);
     var fy = Math.floor(Math.random() * this.settings.wh);
-    this.fruit = new Point(fx, fy);
+    this.fruit = new Fruit(fx, fy);
     for (var i = 0; i < this.snake.length; i++) {
         // Don't generate fruit on top of snake.
-        if (this.snake.occupies(this.fruit)) {
+        if (this.snake.occupies(this.fruit.cell)) {
             this.generateFruit();
             return;
         }
@@ -84,7 +84,7 @@ Game.prototype.draw = function() {
     this.ctx.fillStyle = this.settings.worldColour;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     // The rest
-    drawElement(this.ctx, fruit, 0, this.fruit, this.settings);
+    drawElement(this.ctx, this.fruit.draw, null, this.fruit.cell, this.settings);
     this.snake.draw(this.ctx, this.settings);
 };
 
@@ -100,7 +100,7 @@ Game.prototype.increment = function() {
         this.timer = window.setTimeout(() => this.start(), 1500);
         return;
     }
-    var gotFruit = newHead.equals(this.fruit);
+    var gotFruit = newHead.equals(this.fruit.cell);
     this.snake.move(newHead, gotFruit);
     if (gotFruit) {
         // You ate the fruit.
@@ -180,23 +180,23 @@ Game.prototype.bindKey = function(fn) {
     var span = document.getElementById("key_" + fn);
     span.innerHTML = "_";
     this.keyToBind = fn;
-    document.addEventListener("keydown", bindEnteredKey);
+    document.addEventListener("keydown", this.bindEnteredKey);
 };
 
 Game.prototype.handleKeypress = function(e) {
     if (this.inGameView) {
         switch (e.keyCode) {
-            case this.settings.keyL: // Left
-                this.dirChange(e, 0);
+            case this.settings.keyL:
+                this.dirChange(e, Dir.LEFT);
                 break;
-            case this.settings.keyU: // Up
-                this.dirChange(e, 1);
+            case this.settings.keyU:
+                this.dirChange(e, Dir.UP);
                 break;
-            case this.settings.keyR: // Right
-                this.dirChange(e, 2);
+            case this.settings.keyR:
+                this.dirChange(e, Dir.RIGHT);
                 break;
-            case this.settings.keyD: // Down
-                this.dirChange(e, 3);
+            case this.settings.keyD:
+                this.dirChange(e, Dir.DOWN);
                 break;
             case this.settings.keyP: // P for Pause
                 this.togglePaused();
@@ -224,7 +224,7 @@ Game.prototype.start = function() {
     // Position of head of snake - initially centre of grid.
     x = Math.floor(this.settings.ww / 2);
     y = Math.floor(this.settings.wh / 2);
-    this.snake = new Snake(new Point(x, y));
+    this.snake = new Snake(new Cell(x, y));
     // Reset frame rate
     this.fr = this.settings.startFr;
     this.generateFruit();
@@ -232,7 +232,7 @@ Game.prototype.start = function() {
     this.increment();
 };
 
-function bindEnteredKey(e) {
+Game.prototype.bindEnteredKey = function(e) {
     var key = e.key;
     var code = e.keyCode;
     if (code == 32) {
@@ -262,5 +262,5 @@ function bindEnteredKey(e) {
             break;
     }
     span.innerHTML = key;
-    document.removeEventListener("keydown", bindEnteredKey);
+    document.removeEventListener("keydown", this.bindEnteredKey);
 }

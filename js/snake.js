@@ -2,11 +2,11 @@ function Snake(head) {
     this.head = head;
     this.cells = [];
     for (var i = 0; i < 4; i++) {
-        this.cells.push(new Point(head.x, head.y + i));
+        this.cells.push(new Cell(head.x, head.y + i));
     }
     this.length = 4;
-    this.v = new Point(0, 0);
-    this.dir = 1;
+    this.v = new Cell(0, 0);
+    this.dir = Dir.UP;
 }
 
 Snake.prototype.isDead = function(newHead, wrap) {
@@ -38,7 +38,7 @@ Snake.prototype.occupies = function(cell) {
 Snake.prototype.next = function(ww, wh) {
     var newX = (this.head.x + this.v.x + ww) % ww;
     var newY = (this.head.y + this.v.y + wh) % wh;
-    return new Point(newX, newY);
+    return new Cell(newX, newY);
 };
 
 Snake.prototype.stationary = function() {
@@ -59,27 +59,26 @@ Snake.prototype.move = function(cell, gotFruit) {
 };
 
 Snake.prototype.changeDir = function(newDir) {
-    var opp = (newDir + 2) % 4;
-    if (this.dir != opp && this.dir != newDir) {
+    if (this.dir != Dir.properties[newDir].opp && this.dir != newDir) {
         switch (newDir) {
-            case 0: // Left
-                this.v = new Point(-1, 0);
+            case Dir.LEFT:
+                this.v = new Cell(-1, 0);
                 break;
-            case 1: // Up
-                this.v = new Point(0, -1);
+            case Dir.UP:
+                this.v = new Cell(0, -1);
                 break;
-            case 2: // Right
-                this.v = new Point(1, 0);
+            case Dir.RIGHT:
+                this.v = new Cell(1, 0);
                 break;
-            case 3: // Down
-                this.v = new Point(0, 1);
+            case Dir.DOWN:
+                this.v = new Cell(0, 1);
                 break;
         }
         this.dir = newDir;
         return true;
     } else if (this.stationary()) {
         // Game not yet started and up entered
-        this.v = new Point(0, -1);
+        this.v = new Cell(0, -1);
         return true;
     }
     return false;
@@ -89,26 +88,26 @@ Snake.prototype.draw = function(ctx, settings) {
     // Head
     var dirFront, dirBack, link;
     dirBack = this.cells[1].dir(this.head, settings.ww, settings.wh);
-    drawElement(ctx, snakeHead, dirBack, this.head, settings);
+    drawElement(ctx, this.drawHead, dirBack, this.head, settings);
     // Body
     for (var i = 1; i < this.length-1; i++) {
         dirFront = this.cells[i].dir(this.cells[i-1], settings.ww, settings.wh);
         dirBack = this.cells[i+1].dir(this.cells[i], settings.ww, settings.wh);
-        link = snakeStraightLink;
-        if (dirFront == (dirBack+3) % 4) {
-            link = snakeLeftTurnLink;
-        } else if (dirFront == (dirBack+1) % 4) {
-            link = snakeRightTurnLink;
+        link = this.drawStraightLink;
+        if (dirFront == Dir.properties[dirBack].ccw) {
+            link = this.drawLeftTurnLink;
+        } else if (dirFront == Dir.properties[dirBack].cw) {
+            link = this.drawRightTurnLink;
         }
         drawElement(ctx, link, dirBack, this.cells[i], settings);
     }
     dirFront = this.cells[this.length - 1].dir(this.cells[this.length - 2], settings.ww, settings.wh);
-    drawElement(ctx, snakeTail, dirFront, this.cells[this.length - 1], settings);
+    drawElement(ctx, this.drawTail, dirFront, this.cells[this.length - 1], settings);
 };
 
 // Snake part draw functions
 
-function snakeHead(ctx, p, settings) {
+Snake.prototype.drawHead = function(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc((p.x + 0.5) * gs, (p.y + 0.7) * gs, 9, Math.PI, 2 * Math.PI, false);
     ctx.lineTo((p.x + 1) * gs - 1, (p.y + 1) * gs);
@@ -133,9 +132,9 @@ function snakeHead(ctx, p, settings) {
     ctx.arc((p.x+0.5)*gs + tongueRad, p.y*gs + tongueRad, tongueRad, Math.PI, 3*Math.PI/2, false);
     ctx.strokeStyle = "red";
     ctx.stroke();
-}
+};
 
-function snakeStraightLink(ctx, p, settings) {
+Snake.prototype.drawStraightLink = function(ctx, p, settings) {
     ctx.fillStyle = settings.snakeColour;
     ctx.fillRect(p.x*gs+1, p.y*gs, gs-2, gs);
     ctx.beginPath();
@@ -143,9 +142,9 @@ function snakeStraightLink(ctx, p, settings) {
     ctx.arc((p.x+0.5)*gs, (p.y+0.5)*gs, spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
-}
+};
 
-function snakeLeftTurnLink(ctx, p, settings) {
+Snake.prototype.drawLeftTurnLink = function(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc(p.x*gs, (p.y+1)*gs, gs-1, -Math.PI/2, 0, false);
     ctx.lineTo(p.x*gs + 1, (p.y+1)*gs);
@@ -158,9 +157,9 @@ function snakeLeftTurnLink(ctx, p, settings) {
     ctx.arc((p.x+0.3)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
-}
+};
 
-function snakeRightTurnLink(ctx, p, settings) {
+Snake.prototype.drawRightTurnLink = function(ctx, p, settings) {
     ctx.beginPath();
     ctx.arc((p.x+1)*gs, (p.y+1)*gs, gs-1, Math.PI, 3*Math.PI/2, false);
     ctx.lineTo((p.x+1)*gs, (p.y+1)*gs - 1);
@@ -173,9 +172,9 @@ function snakeRightTurnLink(ctx, p, settings) {
     ctx.arc((p.x+0.7)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
-}
+};
 
-function snakeTail(ctx, p, settings) {
+Snake.prototype.drawTail = function(ctx, p, settings) {
     var tipRad = 3;
     ctx.beginPath();
     ctx.moveTo(p.x*gs + 1, p.y*gs);
