@@ -4,7 +4,7 @@ function Game(canvas) {
     // Direction changed in this frame, and whether game is paused
     this.dirChanged = this.paused = this.startQueued = false;
     this.inGameView = true;
-    this.aiMode = true;
+    this.aiMode = false;
 }
 
 Game.prototype.reset = function() {
@@ -136,6 +136,22 @@ Game.prototype.increment = function() {
     this.timer = window.setTimeout(() => this.increment(), 1000 / this.fr);
     if (this.aiMode) {
         this.snake.changeDir(this.ai.getMove(this.snake.head, this.snake.dir, this.fruit.cell));
+    }
+};
+
+Game.prototype.toggleAI = function() {
+    var btn = document.getElementById("ai_btn");
+    this.aiMode = !this.aiMode;
+    if (this.aiMode) {
+        btn.innerHTML = "Stop AI";
+        if (this.paused) {
+            this.togglePaused();
+        }
+    } else {
+        btn.innerHTML = "Run AI";
+        if (!this.paused) {
+            this.togglePaused();
+        }
     }
 };
 
