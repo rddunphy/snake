@@ -159,8 +159,9 @@ Game.prototype.togglePaused = function() {
         if (this.startQueued) {
             this.startQueued = false;
             this.start();
+        } else {
+            this.increment();
         }
-        this.increment();
     }
 };
 
