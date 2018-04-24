@@ -203,7 +203,7 @@ Game.prototype.togglePaused = function() {
 };
 
 Game.prototype.dirChange = function(e, newDir) {
-    if (!this.paused) {
+    if (!this.paused && !this.aiMode) {
         if (this.dirChanged) {
             // Only change direction once per frame.
             this.storedKeypress = e;
@@ -221,7 +221,7 @@ Game.prototype.bindKey = function(fn) {
 };
 
 Game.prototype.handleKeypress = function(e) {
-    if (this.inGameView && !this.aiMode) {
+    if (this.inGameView) {
         switch (e.keyCode) {
             case this.settings.keyL:
                 this.dirChange(e, Dir.LEFT);
