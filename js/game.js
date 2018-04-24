@@ -4,6 +4,7 @@ function Game(canvas) {
     // Direction changed in this frame, and whether game is paused
     this.dirChanged = this.paused = this.startQueued = false;
     this.inGameView = true;
+    this.aiMode = true;
 }
 
 Game.prototype.reset = function() {
@@ -14,6 +15,7 @@ Game.prototype.reset = function() {
         this.togglePaused();
     }
     this.settings = new Settings();
+    this.ai = new AI(this);
     this.score = this.highscore = 0;
     this.start();
 };
@@ -132,6 +134,9 @@ Game.prototype.increment = function() {
     // Redraw the board.
     this.draw();
     this.timer = window.setTimeout(() => this.increment(), 1000 / this.fr);
+    if (this.aiMode) {
+        this.snake.changeDir(this.ai.getMove(this.snake.head, this.snake.dir, this.fruit.cell));
+    }
 };
 
 Game.prototype.toggleSettingsView = function() {
@@ -199,7 +204,7 @@ Game.prototype.bindKey = function(fn) {
 };
 
 Game.prototype.handleKeypress = function(e) {
-    if (this.inGameView) {
+    if (this.inGameView && !this.aiMode) {
         switch (e.keyCode) {
             case this.settings.keyL:
                 this.dirChange(e, Dir.LEFT);

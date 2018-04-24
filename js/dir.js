@@ -8,7 +8,8 @@ var Dir = {
         2: {opp: 4, cw: 3, ccw: 1, angle: 0},
         3: {opp: 1, cw: 4, ccw: 2, angle: Math.PI/2},
         4: {opp: 2, cw: 1, ccw: 3, angle: Math.PI}
-    }
+    },
+    values: [1, 2, 3, 4]
 };
 
 if (Object.freeze) {
