@@ -135,7 +135,8 @@ Game.prototype.increment = function() {
     this.draw();
     this.timer = window.setTimeout(() => this.increment(), 1000 / this.fr);
     if (this.aiMode) {
-        this.snake.changeDir(this.ai.getMove(this.snake.head, this.snake.dir, this.fruit.cell));
+        var move = this.ai.getMove();
+        this.snake.changeDir(move);
     }
 };
 

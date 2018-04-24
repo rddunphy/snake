@@ -20,3 +20,7 @@ Cell.prototype.dir = function(p, ww, wh) {
     }
     return Dir.RIGHT;
 };
+
+Cell.prototype.copy = function() {
+    return new Cell(this.x, this.y);
+};

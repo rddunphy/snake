@@ -59,6 +59,9 @@ Snake.prototype.move = function(cell, gotFruit) {
 };
 
 Snake.prototype.changeDir = function(newDir) {
+    if (!newDir) {
+        return false;
+    }
     if (this.dir != Dir.properties[newDir].opp && this.dir != newDir) {
         switch (newDir) {
             case Dir.LEFT:
@@ -191,4 +194,16 @@ Snake.prototype.drawTail = function(ctx, p, settings) {
     ctx.arc((p.x+0.5)*gs, (p.y+0.25)*gs, spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
-}
+};
+
+Snake.prototype.copy = function() {
+    var copy = new Snake(this.head.copy());
+    copy.cells = [];
+    for (var i = 0; i < this.length; i++) {
+        copy.cells.push(this.cells[i].copy());
+    }
+    copy.length = this.length;
+    copy.v = this.v.copy();
+    copy.dir = this.dir;
+    return copy;
+};
