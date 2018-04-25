@@ -1,11 +1,17 @@
 function Game(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
+}
+
+Game.prototype.init = function() {
     // Direction changed in this frame, and whether game is paused
     this.dirChanged = this.paused = this.startQueued = false;
     this.inGameView = true;
     this.aiMode = false;
-}
+    this.ai = new AI(this);
+    this.loadCookies();
+    this.start();
+};
 
 Game.prototype.reset = function() {
     if (!this.inGameView) {
@@ -15,7 +21,8 @@ Game.prototype.reset = function() {
         this.togglePaused();
     }
     this.ai = new AI(this);
-    this.loadCookies();
+    this.settings = new Settings();
+    this.writeCookies();
     this.start();
 };
 
