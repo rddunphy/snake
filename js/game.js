@@ -17,6 +17,7 @@ Game.prototype.reset = function() {
     this.settings = new Settings();
     this.ai = new AI(this);
     this.score = this.highscore = 0;
+    this.loadCookies();
     this.start();
 };
 
@@ -256,6 +257,7 @@ Game.prototype.start = function() {
     clearTimeout(this.timer);
     if (this.score > this.highscore) {
         this.highscore = this.score;
+        this.writeCookies();
     }
     this.score = 0;
     // Position of head of snake - initially centre of grid.
@@ -300,4 +302,12 @@ Game.prototype.bindEnteredKey = function(e) {
     }
     span.innerHTML = key;
     document.removeEventListener("keydown", this.bindEnteredKey);
-}
+};
+
+Game.prototype.loadCookies = function() {
+    this.highscore = cookieHandler.getCookie("highscore") || 0;
+};
+
+Game.prototype.writeCookies = function() {
+    cookieHandler.setCookie("highscore", this.highscore, 365);
+};

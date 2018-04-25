@@ -1,11 +1,12 @@
 
-div {
+#main_div {
     width: 900px;
     margin: 0 auto;
     text-align: center;
 }
 
 .section {
+    margin: 0 auto;
     width: 400px;
     padding: 10px;
     margin-bottom: 20px;
@@ -29,6 +30,7 @@ div {
 #copyright_div {
     color: grey;
     font-size: small;
+    margin-bottom: 40px;
 }
 
 #copyright_div a {

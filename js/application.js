@@ -3,8 +3,10 @@
 const gs = 20;
 
 var game;
+var cookieHandler;
 
 window.onload = function() {
+    cookieHandler = new CookieHandler();
     var canvas = document.getElementById("snake_canvas");
     game = new Game(canvas);
     document.addEventListener("keydown", (e) => game.handleKeypress(e));
