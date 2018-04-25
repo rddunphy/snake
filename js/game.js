@@ -16,7 +16,6 @@ Game.prototype.reset = function() {
     }
     this.settings = new Settings();
     this.ai = new AI(this);
-    this.score = this.highscore = 0;
     this.loadCookies();
     this.start();
 };
@@ -83,6 +82,7 @@ Game.prototype.draw = function() {
     // Update score display
     var scoreString = "Score: " + this.score + " - Highscore: " + this.highscore;
     document.getElementById("score_div").innerHTML = scoreString;
+    document.getElementById("settings_highscore").innerHTML = this.highscore;
     // Draw background
     this.ctx.fillStyle = this.settings.worldColour;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);

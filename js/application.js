@@ -13,6 +13,7 @@ window.onload = function() {
     document.getElementById("apply_settings_btn").onclick = () => game.loadSettingsAndStart();
     document.getElementById("cancel_settings_btn").onclick = () => game.toggleSettingsView();
     document.getElementById("reset_btn").onclick = () => game.reset();
+    document.getElementById("reset_highscore_btn").onclick = () => game.highscore = 0;
     document.getElementById("settings_btn").onclick = () => game.toggleSettingsView();
     document.getElementById("ai_btn").onclick = () => game.toggleAI();
     document.getElementById("key_left").onclick = function() {game.bindKey("left");};
