@@ -14,7 +14,6 @@ Game.prototype.reset = function() {
     if (this.paused) {
         this.togglePaused();
     }
-    this.settings = new Settings();
     this.ai = new AI(this);
     this.loadCookies();
     this.start();
@@ -62,6 +61,7 @@ Game.prototype.loadSettingsAndStart = function() {
     if (this.paused) {
         this.togglePaused();
     }
+    this.writeCookies();
     this.start();
 };
 
@@ -306,8 +306,14 @@ Game.prototype.bindEnteredKey = function(e) {
 
 Game.prototype.loadCookies = function() {
     this.highscore = cookieHandler.getCookie("highscore") || 0;
+    this.settings = new Settings();
+    var cookieSettings = cookieHandler.getCookie("settings");
+    if (cookieSettings) {
+        Object.assign(this.settings, JSON.parse(cookieSettings));
+    }
 };
 
 Game.prototype.writeCookies = function() {
     cookieHandler.setCookie("highscore", this.highscore, 365);
+    cookieHandler.setCookie("settings", JSON.stringify(this.settings), 365);
 };

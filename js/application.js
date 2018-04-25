@@ -1,4 +1,3 @@
-
 // Grid size - width and height of a cell in pixels
 const gs = 20;
 
@@ -22,4 +21,4 @@ window.onload = function() {
     document.getElementById("key_down").onclick = function() {game.bindKey("down");};
     document.getElementById("key_pause").onclick = function() {game.bindKey("pause");};
     game.reset();
-}
+};
