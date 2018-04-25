@@ -11,6 +11,7 @@ Game.prototype.init = function() {
     this.ai = new AI(this);
     this.loadCookies();
     this.start();
+    this.mobileGestures = false;
 };
 
 Game.prototype.reset = function() {
@@ -136,7 +137,11 @@ Game.prototype.increment = function() {
     // Handle leftover keypresses from previous iteration
     this.dirChanged = false;
     if (this.storedKeypress) {
-        this.handleKeypress(this.storedKeypress);
+        if (this.mobileGestures) {
+            this.handleGesture(this.storedKeypress);
+        } else {
+            this.handleKeypress(this.storedKeypress);
+        }
         this.storedKeypress = null;
     }
     // Redraw the board.
@@ -230,6 +235,7 @@ Game.prototype.bindKey = function(fn) {
 
 Game.prototype.handleKeypress = function(e) {
     if (this.inGameView) {
+        this.mobileGestures = false;
         switch (e.keyCode) {
             case this.settings.keyL:
                 this.dirChange(e, Dir.LEFT);
@@ -251,6 +257,29 @@ Game.prototype.handleKeypress = function(e) {
                 return;
         }
         e.preventDefault();
+    }
+};
+
+Game.prototype.handleGesture = function(e) {
+    if (this.inGameView) {
+        this.mobileGestures = true;
+        switch (e.type) {
+            case "swipeleft":
+                this.dirChange(e, Dir.LEFT);
+                break;
+            case "swipeup":
+                this.dirChange(e, Dir.UP);
+                break;
+            case "swiperight":
+                this.dirChange(e, Dir.RIGHT);
+                break;
+            case "swipeleft":
+                this.dirChange(e, Dir.DOWN);
+                break;
+            case "tap": // P for Pause
+                this.togglePaused();
+                break;
+        }
     }
 };
 
