@@ -273,7 +273,7 @@ Game.prototype.handleGesture = function(e) {
             case "swiperight":
                 game.dirChange(e, Dir.RIGHT);
                 break;
-            case "swipeleft":
+            case "swipedown":
                 game.dirChange(e, Dir.DOWN);
                 break;
             case "tap": // P for Pause
