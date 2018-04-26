@@ -5,6 +5,10 @@
     text-align: center;
 }
 
+.mobile_only {
+    display: none;
+}
+
 .section {
     margin: 0 auto;
     width: 400px;

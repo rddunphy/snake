@@ -4,8 +4,9 @@
         <meta charset="utf-8">
         <title>Snake</title>
         <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
-        <link rel="stylesheet" href="style.css">
         <link rel="shortcut icon" type="image/png" href="favicon.png"/>
+        <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="css/style-mobile.css">
         <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
     </head>
@@ -20,8 +21,15 @@
                 <div id="paused_div" style="display:none">PAUSED</div>
                 <br>
                 <div id="instruction_div" class="section">
-                    Press any arrow key to begin.<br>
-                    Press P to pause/continue.<br><br>
+                    <span class="desktop_only">
+                        Press any arrow key to begin.<br>
+                        Press P to pause/continue.
+                    </span>
+                    <span class="mobile_only">
+                        Swipe on the green area to begin.<br>
+                        Tap to pause/continue.
+                    </span>
+                    <br><br>
                     <button id="settings_btn">Settings</button>
                     <button id="ai_btn">Run AI</button>
                 </div>
