@@ -261,23 +261,23 @@ Game.prototype.handleKeypress = function(e) {
 };
 
 Game.prototype.handleGesture = function(e) {
-    if (this.inGameView) {
-        this.mobileGestures = true;
+    if (game.inGameView) {
+        game.mobileGestures = true;
         switch (e.type) {
             case "swipeleft":
-                this.dirChange(e, Dir.LEFT);
+                game.dirChange(e, Dir.LEFT);
                 break;
             case "swipeup":
-                this.dirChange(e, Dir.UP);
+                game.dirChange(e, Dir.UP);
                 break;
             case "swiperight":
-                this.dirChange(e, Dir.RIGHT);
+                game.dirChange(e, Dir.RIGHT);
                 break;
             case "swipeleft":
-                this.dirChange(e, Dir.DOWN);
+                game.dirChange(e, Dir.DOWN);
                 break;
             case "tap": // P for Pause
-                this.togglePaused();
+                game.togglePaused();
                 break;
         }
     }
