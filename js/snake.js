@@ -9,13 +9,9 @@ function Snake(head) {
     this.dir = Dir.UP;
 }
 
-Snake.prototype.isDead = function(newHead, wrap) {
-    if (!wrap) {
-        if (Math.abs(newHead.x - this.head.x) > 1 ||
-            Math.abs(newHead.y - this.head.y) > 1) {
-            // You hit the wall.
-            return true;
-        }
+Snake.prototype.isDead = function(newHead) {
+    if (!newHead) { // hit wall
+        return true;
     }
     for (var i = 1; i < this.length - 1; i++) {
         if (newHead.x == this.cells[i].x && newHead.y == this.cells[i].y) {
@@ -33,12 +29,6 @@ Snake.prototype.occupies = function(cell) {
         }
     }
     return false;
-};
-
-Snake.prototype.next = function(ww, wh) {
-    var newX = (this.head.x + this.v.x + ww) % ww;
-    var newY = (this.head.y + this.v.y + wh) % wh;
-    return new Cell(newX, newY);
 };
 
 Snake.prototype.stationary = function() {

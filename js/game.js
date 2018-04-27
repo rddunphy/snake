@@ -88,9 +88,7 @@ Game.prototype.generateFruit = function() {
 
 Game.prototype.draw = function() {
     // Update score display
-    var scoreString = "Score: " + this.score + " - Highscore: " + this.highscore;
-    document.getElementById("score_div").innerHTML = scoreString;
-    document.getElementById("settings_highscore").innerHTML = this.highscore;
+    this.updateScores();
     // Draw background
     this.ctx.fillStyle = this.settings.worldColour;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -101,6 +99,12 @@ Game.prototype.draw = function() {
     this.snake.getElements(this.settings).forEach(function(e) {
         this.drawElement(e.fn, e.dir, e.cell, snakeSizes, this.settings);
     }, this);
+};
+
+Game.prototype.updateScores = function() {
+    var scoreString = "Score: " + this.score + " - Highscore: " + this.highscore;
+    document.getElementById("score_div").innerHTML = scoreString;
+    document.getElementById("settings_highscore").innerHTML = this.highscore;
 };
 
 Game.prototype.drawElement = function(elementFn, orientation, coords, sizes, settings) {
@@ -120,7 +124,7 @@ Game.prototype.increment = function() {
         // Game paused, so do nothing for now.
         return;
     }
-    var newHead = this.snake.next(this.settings.ww, this.settings.wh);
+    var newHead = this.snake.head.adjacent(this.snake.dir, this.settings.ww, this.settings.wh, this.settings.wrap);
     if (this.snake.isDead(newHead, this.settings.wrap)) {
         // If dead, pause graphics for a moment and then restart.
         this.draw();
@@ -214,6 +218,11 @@ Game.prototype.togglePaused = function() {
             this.increment();
         }
     }
+};
+
+Game.prototype.resetHighscore = function() {
+    this.highscore = 0;
+    this.updateScores();
 };
 
 Game.prototype.dirChange = function(e, newDir) {
