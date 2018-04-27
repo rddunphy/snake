@@ -1,9 +1,5 @@
-// Grid size - width and height of a cell in pixels
-const gs = 20;
-
 var game;
 var cookieHandler;
-var hammer;
 
 window.onload = function() {
     cookieHandler = new CookieHandler();
@@ -22,9 +18,8 @@ window.onload = function() {
     document.getElementById("key_down").onclick = function() {game.bindKey("down");};
     document.getElementById("key_pause").onclick = function() {game.bindKey("pause");};
     // Swipe gestures
-    hammer = new Hammer(canvas);
+    var hammer = new Hammer(canvas);
     hammer.get("swipe").set({ direction: Hammer.DIRECTION_ALL });
     hammer.on("swipeleft swiperight swipeup swipedown tap", game.handleGesture);
-    // Initialise game
     game.init();
 };

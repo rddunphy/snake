@@ -95,20 +95,21 @@ Game.prototype.draw = function() {
     this.ctx.fillStyle = this.settings.worldColour;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     // Fruit
-    this.drawElement(this.fruit.draw, null, this.fruit.cell, this.settings);
+    this.drawElement(this.fruit.draw, null, this.fruit.cell, null, this.settings);
     // Snake
+    var snakeSizes = this.snake.calculateSizes(this.gs);
     this.snake.getElements(this.settings).forEach(function(e) {
-        this.drawElement(e.fn, e.dir, e.cell, this.settings);
+        this.drawElement(e.fn, e.dir, e.cell, snakeSizes, this.settings);
     }, this);
 };
 
-Game.prototype.drawElement = function(elementFn, orientation, coords, settings) {
+Game.prototype.drawElement = function(elementFn, orientation, coords, sizes, settings) {
     var angle = orientation ? Dir.properties[orientation].angle : 0;
-    var rp = new Cell((coords.x + 0.5) * gs, (coords.y + 0.5) * gs);
+    var rp = new Cell((coords.x + 0.5) * this.gs, (coords.y + 0.5) * this.gs);
     this.ctx.translate(rp.x, rp.y);
     this.ctx.rotate(angle);
     this.ctx.translate(-rp.x, -rp.y);
-    elementFn(this.ctx, coords, settings);
+    elementFn(this.ctx, coords, sizes, settings);
     this.ctx.translate(rp.x, rp.y);
     this.ctx.rotate(-angle);
     this.ctx.translate(-rp.x, -rp.y);
@@ -288,8 +289,9 @@ Game.prototype.start = function() {
         this.startQueued = true;
         return;
     }
-    this.canvas.width = this.settings.ww * gs;
-    this.canvas.height = this.settings.wh * gs;
+    this.gs = this.canvas.width / this.settings.ww;
+    //this.canvas.width = this.settings.ww * gs;
+    this.canvas.height = this.settings.wh * this.gs;
     clearTimeout(this.timer);
     if (this.score > this.highscore) {
         this.highscore = this.score;

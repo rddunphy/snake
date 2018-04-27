@@ -1,9 +1,26 @@
-@media only screen and (max-device-width: 480px) {
-    .desktop_only {
-        display: none;
-    }
+.desktop_only {
+    display: none;
+}
 
-    .mobile_only {
-        display: inline;
-    }
+.mobile_only {
+    display: inline;
+}
+
+#main_div {
+    width: 95%;
+}
+
+#snake_canvas {
+    width: 95%;
+}
+
+.section {
+    -webkit-box-sizing: border-box; /* Safari/Chrome */
+    -moz-box-sizing: border-box; /* Firefox */
+    box-sizing: border-box;
+    width: 95%;
+}
+
+.section_title {
+    width: 90%;
 }

@@ -108,90 +108,94 @@ Snake.prototype.getElements = function(settings) {
     dirFront = this.cells[this.length - 1].dir(this.cells[this.length - 2], settings.ww, settings.wh);
     elements.push({cell: this.cells[this.length - 1], dir: dirFront, fn: this.drawTail});
     return elements;
-}
+};
+
+Snake.prototype.calculateSizes = function(gs) {
+    return {
+        eyeRad: gs / 20,
+        tongueRad: gs / 6,
+        margin: gs / 20,
+        spotRad: gs / 6,
+        tipRad: gs / 8,
+        tipSpotRad: gs / 9
+    }
+};
 
 // Snake link draw functions
 
-Snake.prototype.drawHead = function(ctx, p, settings) {
+Snake.prototype.drawHead = function(ctx, p, sizes, settings) {
     ctx.beginPath();
-    ctx.arc((p.x + 0.5) * gs, (p.y + 0.7) * gs, 9, Math.PI, 2 * Math.PI, false);
-    ctx.lineTo((p.x + 1) * gs - 1, (p.y + 1) * gs);
-    ctx.lineTo(p.x * gs + 1, (p.y + 1) * gs);
+    ctx.arc((p.x + 0.5) * game.gs, (p.y + 0.7) * game.gs, (game.gs / 2) - sizes.margin, Math.PI, 2 * Math.PI, false);
+    ctx.lineTo((p.x + 1) * game.gs - sizes.margin, (p.y + 1) * game.gs + 0.5);
+    ctx.lineTo(p.x * game.gs + sizes.margin, (p.y + 1) * game.gs + 0.5);
     ctx.closePath();
     ctx.fillStyle = settings.snakeColour;
     ctx.fill();
     // eyes
-    var eyeRad = 1;
     ctx.beginPath();
-    ctx.arc((p.x + 0.3) * gs, (p.y + 0.8) * gs, eyeRad, 0, 2 * Math.PI, false);
+    ctx.arc((p.x + 0.3) * game.gs, (p.y + 0.8) * game.gs, sizes.eyeRad, 0, 2 * Math.PI, false);
     ctx.fillStyle = "black";
     ctx.fill();
     ctx.beginPath();
-    ctx.arc((p.x + 0.7) * gs, (p.y + 0.8) * gs, eyeRad, 0, 2 * Math.PI, false);
+    ctx.arc((p.x + 0.7) * game.gs, (p.y + 0.8) * game.gs, sizes.eyeRad, 0, 2 * Math.PI, false);
     ctx.fill();
     // tongue
     ctx.beginPath();
-    var tongueRad = 0.18*gs;
-    ctx.arc((p.x+0.5)*gs - tongueRad, p.y*gs + tongueRad, tongueRad, -Math.PI/2, 0, false);
-    ctx.lineTo((p.x + 0.5) * gs, (p.y + 0.3) * gs);
-    ctx.arc((p.x+0.5)*gs + tongueRad, p.y*gs + tongueRad, tongueRad, Math.PI, 3*Math.PI/2, false);
+    ctx.arc((p.x+0.5)*game.gs - sizes.tongueRad, p.y*game.gs + sizes.tongueRad, sizes.tongueRad, -Math.PI/2, 0, false);
+    ctx.lineTo((p.x + 0.5) * game.gs, (p.y + 0.3) * game.gs);
+    ctx.arc((p.x+0.5)*game.gs + sizes.tongueRad, p.y*game.gs + sizes.tongueRad, sizes.tongueRad, Math.PI, 3*Math.PI/2, false);
     ctx.strokeStyle = "red";
     ctx.stroke();
 };
 
-Snake.prototype.drawStraightLink = function(ctx, p, settings) {
+Snake.prototype.drawStraightLink = function(ctx, p, sizes, settings) {
     ctx.fillStyle = settings.snakeColour;
-    ctx.fillRect(p.x*gs+1, p.y*gs, gs-2, gs);
+    ctx.fillRect(p.x*game.gs + sizes.margin, p.y*game.gs, game.gs - 2*sizes.margin, game.gs+0.5);
     ctx.beginPath();
-    var spotRad = 3;
-    ctx.arc((p.x+0.5)*gs, (p.y+0.5)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.arc((p.x+0.5)*game.gs, (p.y+0.5)*game.gs, sizes.spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
 };
 
-Snake.prototype.drawLeftTurnLink = function(ctx, p, settings) {
+Snake.prototype.drawLeftTurnLink = function(ctx, p, sizes, settings) {
     ctx.beginPath();
-    ctx.arc(p.x*gs, (p.y+1)*gs, gs-1, -Math.PI/2, 0, false);
-    ctx.lineTo(p.x*gs + 1, (p.y+1)*gs);
-    ctx.lineTo(p.x*gs, (p.y+1)*gs - 1);
+    ctx.arc(p.x*game.gs, (p.y+1)*game.gs + 0.5, game.gs-sizes.margin, -Math.PI/2, 0, false);
+    ctx.lineTo(p.x*game.gs + sizes.margin, (p.y+1)*game.gs + 0.5);
+    ctx.lineTo(p.x*game.gs, (p.y+1)*game.gs - sizes.margin);
     ctx.closePath();
     ctx.fillStyle = settings.snakeColour;
     ctx.fill();
     ctx.beginPath();
-    var spotRad = 3;
-    ctx.arc((p.x+0.3)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.arc((p.x+0.3)*game.gs, (p.y+0.7)*game.gs, sizes.spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
 };
 
-Snake.prototype.drawRightTurnLink = function(ctx, p, settings) {
+Snake.prototype.drawRightTurnLink = function(ctx, p, sizes, settings) {
     ctx.beginPath();
-    ctx.arc((p.x+1)*gs, (p.y+1)*gs, gs-1, Math.PI, 3*Math.PI/2, false);
-    ctx.lineTo((p.x+1)*gs, (p.y+1)*gs - 1);
-    ctx.lineTo((p.x+1)*gs - 1, (p.y+1)*gs);
+    ctx.arc((p.x+1)*game.gs, (p.y+1)*game.gs + 0.5, game.gs-sizes.margin, Math.PI, 3*Math.PI/2, false);
+    ctx.lineTo((p.x+1)*game.gs, (p.y+1)*game.gs - sizes.margin);
+    ctx.lineTo((p.x+1)*game.gs - sizes.margin, (p.y+1)*game.gs + 0.5);
     ctx.closePath();
     ctx.fillStyle = settings.snakeColour;
     ctx.fill();
     ctx.beginPath();
-    var spotRad = 3;
-    ctx.arc((p.x+0.7)*gs, (p.y+0.7)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.arc((p.x+0.7)*game.gs, (p.y+0.7)*game.gs, sizes.spotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
 };
 
-Snake.prototype.drawTail = function(ctx, p, settings) {
-    var tipRad = 3;
+Snake.prototype.drawTail = function(ctx, p, sizes, settings) {
     ctx.beginPath();
-    ctx.moveTo(p.x*gs + 1, p.y*gs);
-    ctx.lineTo((p.x+1)*gs - 1, p.y*gs);
-    ctx.lineTo((p.x+0.5)*gs+tipRad, (p.y+1)*gs-tipRad);
-    ctx.arc((p.x+0.5)*gs, (p.y+1)*gs-tipRad, tipRad, 0, Math.PI, false);
+    ctx.moveTo(p.x*game.gs + sizes.margin, p.y*game.gs);
+    ctx.lineTo((p.x+1)*game.gs - sizes.margin, p.y*game.gs);
+    ctx.lineTo((p.x+0.5)*game.gs+sizes.tipRad, (p.y+1)*game.gs-sizes.tipRad);
+    ctx.arc((p.x+0.5)*game.gs, (p.y+1)*game.gs-sizes.tipRad, sizes.tipRad, 0, Math.PI, false);
     ctx.closePath();
     ctx.fillStyle = settings.snakeColour;
     ctx.fill();
     ctx.beginPath();
-    var spotRad = 1.8;
-    ctx.arc((p.x+0.5)*gs, (p.y+0.25)*gs, spotRad, 0, 2*Math.PI, false);
+    ctx.arc((p.x+0.5)*game.gs, (p.y+0.25)*game.gs, sizes.tipSpotRad, 0, 2*Math.PI, false);
     ctx.fillStyle = settings.patternColour;
     ctx.fill();
 };
